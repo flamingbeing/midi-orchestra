@@ -1,0 +1,19 @@
+{
+ "title": "lovesign instrumental",
+ "short_title": "lovesign instrumental",
+ "storage_key": "lovesign-instrumental",
+ "github_raw": "https://github.com/flamingbeing/midi-orchestra/raw/main/lovesign%20instrumental/drafts/",
+ "drafts": [
+  {
+   "id": "draft1",
+   "label": "Draft 1",
+   "file": "lovesign_instrumental_draft1.mp3",
+   "songs": [
+    [
+     0.0,
+     "lovesign instrumental"
+    ]
+   ]
+  }
+ ]
+}
