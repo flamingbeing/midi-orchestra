@@ -73,3 +73,5 @@ On draft 9 (second listener, "panda", via the listening page; times are draft 9 
 - 3:38.3-3:43.3 (Beauty and the Beast): LIKED - the additional trill on the flute countermelody is very nice (keep)
 - 5:29.4-5:34.4 (Reflection): the piano is a bit too soft here; the semiquavers should be heard
 - 6:32.5-6:37.5 (A Whole New World): the harp glissando here is missing
+
+Draft 10 accepted as the FINAL version by the user (2026-10-08). Further changes to this piece only on new listener requests.

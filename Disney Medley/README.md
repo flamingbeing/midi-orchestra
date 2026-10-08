@@ -1,4 +1,4 @@
-# Disney Medley
+# Disney Medley — final: draft 10
 
 An orchestral rendering of a Sibelius arrangement that runs through ten songs: Belle, I'll Make a Man Out of You, Just Around the Riverbend, I Won't Say, One Jump Ahead, Beauty and the Beast, Go the Distance, Reflection, Out There and A Whole New World.
 
@@ -16,7 +16,7 @@ Drafts 1–9 are 192 kbps MP3 and draft 10 onwards VBR V2 MP3, all named after t
 
 | File | Notes |
 | --- | --- |
-| `disney_medley_original_draft10.mp3` | Latest version, from the second listener's comments: steel-string acoustic guitar, louder harp glissandi, harp over strings at 1:38, staccato strums at 2:17, rolled harp chords at 3:05, piano semiquavers at 5:30 brought out. See `notes/changes_draft10.md`. |
+| `disney_medley_original_draft10.mp3` | **Final version** (approved by the listener). Made from the second listener's comments: steel-string acoustic guitar, louder harp glissandi, harp over strings at 1:38, staccato strums at 2:17, rolled harp chords at 3:05, piano semiquavers at 5:30 brought out. See `notes/changes_draft10.md`. |
 | `disney_medley_original_draft9.mp3` | Breathing for flute and clarinet, true slurs, re-tongued repeated notes and balance automation. |
 | `disney_medley_original_draft8.mp3` | Shorter string attacks, tempo-map fixes and no master compressor. |
 | `disney_medley_original_draft7b.mp3` | Goes back to the draft 6 engine and adds balance calibration after the hall reverb. |
@@ -47,4 +47,4 @@ Song start times differ slightly between drafts. Drafts 1 and 2 and the plain re
 | `make_input.sh` | Builds the render input from the original MIDI: `prepare.py` assigns the Sibelius tracks to sounds, then `tempo_plus5.py` and `tempo_fixes.py` apply the tempo edits. |
 | `listening_page.json` | Draft list and song start times for the listening-notes page. |
 
-To rebuild the latest draft, run `pipeline/run.sh "Disney Medley" draft9_rebuild` from the repo root. It rebuilds the draft 9 master WAV from `score/disney_medley_original.mid`; the result was checked to be sample-for-sample identical to the original draft 9 master. The code is in [`../pipeline`](../pipeline).
+**Final: draft 10** (git tag `disney-medley-final`). To rebuild it, run `pipeline/run.sh "Disney Medley" draft10_rebuild` from the repo root at that tag; `config/piece.json` holds every setting it used. The engine's regression check still rebuilds draft 9 (see `CLAUDE.md`). The code is in [`../pipeline`](../pipeline).
