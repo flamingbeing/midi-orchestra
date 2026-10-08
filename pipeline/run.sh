@@ -5,7 +5,7 @@
 #   PIECE FOLDER  e.g. "Disney Medley". Needs config/piece.json; its "midi" entry names the MIDI file, relative to
 #                 the folder. If config/make_input.sh exists it turns that MIDI into the render input; otherwise
 #                 pipeline/prepare.py does it.
-#   DRAFT_NAME    e.g. draft10 -> writes "PIECE FOLDER/drafts/<midi name>_draft10.mp3" (192k) and .m4a (AAC 256k)
+#   DRAFT_NAME    e.g. draft10 -> writes "PIECE FOLDER/drafts/<midi name>_draft10.mp3" (MP3 VBR V2) and .m4a (AAC 256k)
 # env: PY (python with requirements.txt), WORK (scratch dir, needs ~3 GB), MASTER_AIR (master high shelf)
 set -e
 PIPE=$(cd "$(dirname "$0")" && pwd)
@@ -34,6 +34,6 @@ I=$(ffmpeg -hide_banner -i "$WORK/pre.wav" -af ebur128=framelog=quiet -f null - 
 G=$(python3 -c "print(-16-($I))")
 ffmpeg -y -loglevel error -i "$WORK/pre.wav" -af "volume=${G}dB,alimiter=limit=0.84:attack=5:release=80:level=false" -c:a pcm_f32le "$WORK/master.wav"
 ffmpeg -y -loglevel error -i "$WORK/master.wav" -c:a aac -b:a 256k -movflags +faststart "$OUT.m4a"
-ffmpeg -y -loglevel error -i "$WORK/master.wav" -c:a libmp3lame -b:a 192k "$OUT.mp3"
+ffmpeg -y -loglevel error -i "$WORK/master.wav" -c:a libmp3lame -q:a 2 "$OUT.mp3"
 rm -f "$WORK/dry.wav" "$WORK/pre.wav"
 echo "done: $OUT.mp3 (master and stems in $WORK)"

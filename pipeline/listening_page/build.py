@@ -1,6 +1,6 @@
 """Build the listening-notes page for one piece.
 
-usage: build.py "PIECE FOLDER" OUT.html
+usage: build.py "PIECE FOLDER" OUT.html [AUDIO_BASE_URL]
 
 Reads PIECE FOLDER/config/listening_page.json:
   {"title": "Disney Medley", "short_title": "Medley", "storage_key": "medley",
@@ -10,12 +10,15 @@ Reads PIECE FOLDER/config/listening_page.json:
 and fills duration and waveform peaks from PIECE FOLDER/drafts/<file>. The page plays audio/<id>.mp3, so publish
 those MP3s next to the page (Artifact files {"audio/<id>.mp3": ...}). Download buttons link to github_raw + <file>.
 Comments are tagged with the draft id, so keep ids stable when files are renamed.
+With AUDIO_BASE_URL (GitHub Pages) the page streams <AUDIO_BASE_URL><file> instead of audio/<id>.mp3.
 storage_key keeps a listener's saved comments across rebuilds: never change it for a published page.
 """
 import json, os, subprocess, sys
+from urllib.parse import quote
 import numpy as np
 
 piece, out = sys.argv[1:3]
+base = sys.argv[3] if len(sys.argv) > 3 else None
 cfg = json.load(open(os.path.join(piece, 'config', 'listening_page.json')))
 drafts = []
 for d in cfg['drafts']:
@@ -25,7 +28,8 @@ for d in cfg['drafts']:
     n = len(m) // 1200
     pk = [float(np.sqrt(np.mean(m[i * n:(i + 1) * n] ** 2))) for i in range(1200)]
     mx = max(pk)
-    drafts.append(dict(id=d['id'], label=d['label'], src=f"audio/{d['id']}.mp3", file=d.get('file', d['id'] + '.mp3'), dur=round(len(m) / 44100, 2),
+    drafts.append(dict(id=d['id'], label=d['label'], src=(base + quote(d.get('file', d['id'] + '.mp3'))) if base else f"audio/{d['id']}.mp3",
+                       file=d.get('file', d['id'] + '.mp3'), dur=round(len(m) / 44100, 2),
                        peaks=[round(100 * p / mx) for p in pk], songs=d['songs']))
 t = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template.html')).read()
 for k, v in {'__TITLE_SHORT__': cfg.get('short_title', cfg['title']), '__TITLE__': cfg['title'],

@@ -4,7 +4,10 @@ This repo turns MIDI scores into realistic orchestral recordings and keeps one f
 
 | Folder | Contents |
 | --- | --- |
-| [`pipeline/`](pipeline) | The rendering pipeline: code, free sample libraries, hall impulse responses and the listening-notes page. |
+| [`inbox/`](inbox) | Upload a MIDI file here on GitHub. Draft 1 is then rendered automatically, along with its listening page. |
+| [`pipeline/`](pipeline) | The rendering pipeline: code, free sample libraries, hall impulse responses, the listening-page builder and an instrument demo. |
 | [`Disney Medley/`](Disney%20Medley) | The original MIDI, the PDF and Sibelius score, every draft as an MP3, and the listener feedback. |
 
-To add a piece, create a folder named after it with `score/`, `config/piece.json` and `notes/`, then run `pipeline/run.sh "<Piece>" draft1`. See [`pipeline/README.md`](pipeline/README.md).
+**Listening site:** `https://flamingbeing.github.io/midi-orchestra/` has one page per piece. Play any draft, mark passages, comment, and download the MP3. It updates whenever a draft is added.
+
+**Improving a piece:** open a Claude Code session on this repo and paste the listener's comments. [`CLAUDE.md`](CLAUDE.md) tells the session how drafts are improved and checked.

@@ -1,0 +1,32 @@
+name: Listening site
+# Rebuild the GitHub Pages listening site whenever drafts or listening-page settings change.
+on:
+  push:
+    branches: [main]
+    paths: ['**/drafts/*.mp3', '**/config/listening_page.json', 'pipeline/listening_page/**']
+  workflow_run:
+    workflows: [Render new pieces]
+    types: [completed]
+  workflow_dispatch:
+concurrency: { group: pages, cancel-in-progress: true }
+permissions: { contents: read, pages: write, id-token: write }
+jobs:
+  build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main, sparse-checkout: "/*\n!/pipeline/assets/\n", sparse-checkout-cone-mode: false }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg && pip install -q numpy==1.26.4
+      - run: python pipeline/listening_page/build_site.py . _site
+        env: { GITHUB_REPOSITORY: '${{ github.repository }}' }
+      - uses: actions/upload-pages-artifact@v3
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: '${{ steps.deployment.outputs.page_url }}' }
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
