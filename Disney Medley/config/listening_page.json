@@ -1,0 +1,560 @@
+{
+ "title": "Disney Medley",
+ "short_title": "Medley",
+ "storage_key": "medley",
+ "github_raw": "https://github.com/flamingbeing/midi-orchestra/raw/main/Disney%20Medley/drafts/",
+ "drafts": [
+  {
+   "id": "draft9",
+   "label": "Draft 9",
+   "songs": [
+    [
+     0.0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     260.0,
+     "Go the Distance"
+    ],
+    [
+     304.7,
+     "Reflection"
+    ],
+    [
+     333.3,
+     "Out There"
+    ],
+    [
+     352.0,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft8",
+   "label": "Draft 8",
+   "songs": [
+    [
+     0.0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     260.0,
+     "Go the Distance"
+    ],
+    [
+     304.7,
+     "Reflection"
+    ],
+    [
+     333.3,
+     "Out There"
+    ],
+    [
+     352.0,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft7b",
+   "label": "Draft 7b",
+   "songs": [
+    [
+     0.0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     259.7,
+     "Go the Distance"
+    ],
+    [
+     305.0,
+     "Reflection"
+    ],
+    [
+     333.7,
+     "Out There"
+    ],
+    [
+     352.3,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft7",
+   "label": "Draft 7",
+   "songs": [
+    [
+     0.0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     259.7,
+     "Go the Distance"
+    ],
+    [
+     305.0,
+     "Reflection"
+    ],
+    [
+     333.7,
+     "Out There"
+    ],
+    [
+     352.3,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft6",
+   "label": "Draft 6",
+   "songs": [
+    [
+     0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     259.7,
+     "Go the Distance"
+    ],
+    [
+     305.0,
+     "Reflection"
+    ],
+    [
+     333.6,
+     "Out There"
+    ],
+    [
+     352.2,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft5",
+   "label": "Draft 5",
+   "songs": [
+    [
+     0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     259.7,
+     "Go the Distance"
+    ],
+    [
+     305.0,
+     "Reflection"
+    ],
+    [
+     333.6,
+     "Out There"
+    ],
+    [
+     352.2,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft4",
+   "label": "Draft 4",
+   "songs": [
+    [
+     0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     259.7,
+     "Go the Distance"
+    ],
+    [
+     305.0,
+     "Reflection"
+    ],
+    [
+     333.6,
+     "Out There"
+    ],
+    [
+     352.2,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft3b",
+   "label": "Draft 3b",
+   "songs": [
+    [
+     0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     259.7,
+     "Go the Distance"
+    ],
+    [
+     305.0,
+     "Reflection"
+    ],
+    [
+     333.6,
+     "Out There"
+    ],
+    [
+     352.2,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft3",
+   "label": "Draft 3",
+   "songs": [
+    [
+     0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     259.7,
+     "Go the Distance"
+    ],
+    [
+     305.0,
+     "Reflection"
+    ],
+    [
+     333.6,
+     "Out There"
+    ],
+    [
+     352.2,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft2",
+   "label": "Draft 2",
+   "songs": [
+    [
+     0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     262.6,
+     "Go the Distance"
+    ],
+    [
+     309.5,
+     "Reflection"
+    ],
+    [
+     338.2,
+     "Out There"
+    ],
+    [
+     356.9,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "draft1",
+   "label": "Draft 1",
+   "songs": [
+    [
+     0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     262.6,
+     "Go the Distance"
+    ],
+    [
+     309.5,
+     "Reflection"
+    ],
+    [
+     338.2,
+     "Out There"
+    ],
+    [
+     356.9,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
+   "id": "original",
+   "label": "Original MIDI (plain)",
+   "songs": [
+    [
+     0.0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     262.6,
+     "Go the Distance"
+    ],
+    [
+     309.5,
+     "Reflection"
+    ],
+    [
+     338.2,
+     "Out There"
+    ],
+    [
+     356.9,
+     "A Whole New World"
+    ]
+   ]
+  }
+ ]
+}

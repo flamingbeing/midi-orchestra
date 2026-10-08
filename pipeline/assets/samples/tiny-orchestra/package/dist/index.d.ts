@@ -1,0 +1,12 @@
+export { Orchestra, type LoadedSample } from './orchestra.ts';
+export { INSTRUMENT_NAMES, type InstrumentName } from './instruments.ts';
+export { midiToFreq, playbackRate, velocityGain, pickLayer, pickSample, pickVariant, type PitchedSample } from './pitch.ts';
+export { beatToTime, timeToBeat, scoreLength, flattenScore, collectEvents, wrapPosition, nextBarBeat, barAt, flattenDynamics, dynamicsAt, type ScoreEvent, type ScoreShape, type FlattenOptions, type Occurrence, type DynamicsCue, } from './score.ts';
+export { tempoMap, repeating, LiveTimeline, type TempoChange, type TempoMap, type Timeline } from './tempo.ts';
+export { noteToMidi, midiToNote, toMidi, sequence, type SequenceOptions } from './notes.ts';
+export { encodeWav, type AudioData, type WavOptions } from './wav.ts';
+export { startScheduler, LOOKAHEAD, LOOKAHEAD_HIDDEN, TICK_MS, type Scheduler, type SchedulerOptions } from './scheduler.ts';
+export { detectOnset, decoderShift, MP3_PRIMING } from './onset.ts';
+export { makeImpulse, makeupGain, type ImpulseOptions } from './reverb.ts';
+export type { Manifest, ManifestFormat, ManifestInstrument, ManifestSample, Score, Part, ScoreNote, DynamicsPoint, Bus, BusOptions, Output, NoteOptions, Voice, PlayOptions, Performance, PartControl, LoadOptions, RenderOptions, OrchestraOptions, } from './types.ts';
+//# sourceMappingURL=index.d.ts.map

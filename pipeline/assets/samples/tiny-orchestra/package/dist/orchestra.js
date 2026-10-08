@@ -1,0 +1,574 @@
+// The Orchestra: loads the samples described by manifest.json, plays single
+// notes with pitch, velocity and envelope, and plays whole scores - looped,
+// too. Everything that works without an AudioContext lives in the pure
+// modules next to this one; this class only wires them up.
+import { decode, dirOf, limiter, withSlash } from "./loader.js";
+import { toMidi } from "./notes.js";
+import { detectOnset, decoderShift } from "./onset.js";
+import { midiToFreq, pickSample, pickVariant, playbackRate, velocityGain } from "./pitch.js";
+import { createBus, createLimiter, createReverb, rampFromNow } from "./reverb.js";
+import { startScheduler } from "./scheduler.js";
+import { barAt, dynamicsAt, flattenDynamics, flattenScore, nextBarBeat, scoreLength, wrapPosition, } from "./score.js";
+import { LiveTimeline, repeating, tempoMap } from "./tempo.js";
+// Fade-in at the offset, only against clicks - the attack is in the sample.
+// Shorter for hits, where the sample already starts just before the peak.
+const ATTACK = 0.003;
+const ATTACK_HIT = 0.001;
+const LOG = '[tiny-orchestra]';
+const nodeOf = (out) => ('input' in out ? out.input : out);
+const isOffline = (ctx) => typeof OfflineAudioContext !== 'undefined' && ctx instanceof OfflineAudioContext;
+/** Tempo map and timeline of a score played with these options. */
+function timelineFor(score, { bpm, from = 0, loop = false }, start) {
+    const base = score.bpm > 0 ? score.bpm : 120;
+    const factor = bpm !== undefined && bpm > 0 ? bpm / base : 1;
+    const lengthBeats = scoreLength(score);
+    const map = tempoMap(base, score.tempo);
+    return { base, lengthBeats, timeline: new LiveTimeline(loop ? repeating(map, lengthBeats) : map, start, from, factor) };
+}
+/**
+ * The sampler. `I` is the set of instrument names it accepts: by default the
+ * bundled ones, so a typo is a compile error. With a custom manifest use
+ * `new Orchestra<string>(ctx, { manifest })` (inferred when you pass a
+ * `Manifest<string>` object).
+ */
+export class Orchestra {
+    ctx;
+    /** Folder of the sample files, with a trailing slash (or empty). */
+    baseUrl;
+    destination;
+    manifestUrl;
+    manifestData = null;
+    manifestPromise = null;
+    loading = new Map();
+    ready = new Map();
+    fetchLimited = limiter(6);
+    options;
+    /** Where buses and the reverb go: the limiter, or `destination`. */
+    output;
+    reverbIn;
+    maxVoices;
+    defaultBus = null;
+    constructor(ctx, options = {}) {
+        const { baseUrl, destination = ctx.destination, manifest, reverb = true, reverbSeconds = 2.6, limiter = false, maxVoices = 32 } = options;
+        this.ctx = ctx;
+        this.options = options;
+        this.destination = destination;
+        this.baseUrl = withSlash(baseUrl ?? (typeof manifest === 'string' ? dirOf(manifest) : ''));
+        this.manifestUrl = typeof manifest === 'string' ? manifest : this.baseUrl + 'manifest.json';
+        if (manifest && typeof manifest === 'object') {
+            this.manifestData = manifest;
+            this.manifestPromise = Promise.resolve(manifest);
+        }
+        this.output = limiter ? createLimiter(ctx, destination) : destination;
+        this.reverbIn = reverb ? createReverb(ctx, this.output, reverbSeconds) : null;
+        this.maxVoices = maxVoices > 0 ? maxVoices : 32;
+    }
+    static midiToFreq(midi) {
+        return midiToFreq(midi);
+    }
+    /** All instrument names in the manifest (empty until it has loaded). */
+    get instruments() {
+        return this.manifestData ? Object.keys(this.manifestData.instruments) : [];
+    }
+    /** The loaded manifest, or null until `load()` has fetched it. */
+    get manifest() {
+        return this.manifestData;
+    }
+    /** True once the instrument is decoded and playable. */
+    has(instrument) {
+        return this.ready.has(instrument);
+    }
+    /**
+     * Load the manifest and the instruments (no argument: all of them). Never
+     * throws - whatever is missing is simply missing, with a console warning.
+     * Calling it again loads nothing twice.
+     */
+    async load(instruments, options = {}) {
+        const { onProgress, signal } = options;
+        if (!this.manifestPromise) {
+            this.manifestPromise = fetch(this.manifestUrl).then(async (r) => {
+                if (!r.ok)
+                    throw new Error(`manifest.json: HTTP ${r.status}`);
+                return (await r.json());
+            });
+        }
+        let manifest;
+        try {
+            manifest = await this.manifestPromise;
+            this.manifestData = manifest;
+        }
+        catch (err) {
+            console.warn(`${LOG} could not load the manifest:`, err);
+            this.manifestPromise = null; // try again on the next load()
+            return;
+        }
+        if (signal?.aborted)
+            return;
+        // the manifest decides what exists at runtime, whatever the types say
+        const all = Object.keys(manifest.instruments);
+        const wanted = instruments ?? all;
+        for (const n of wanted)
+            if (!all.includes(n))
+                console.warn(`${LOG} unknown instrument: ${n}`);
+        const entries = wanted.filter((n) => all.includes(n)).map((n) => this.loadInstrument(manifest, n, signal));
+        let finished = false;
+        if (onProgress) {
+            const files = entries.flatMap((e) => e.files);
+            let done = 0;
+            for (const f of files)
+                void f.then(() => { if (!finished)
+                    onProgress(++done, files.length); });
+        }
+        const aborted = new Promise((resolve) => signal?.addEventListener('abort', () => {
+            // forget right away what this call started, so the next load() starts afresh
+            for (const [n, e] of this.loading)
+                if (e.signal === signal)
+                    this.loading.delete(n);
+            resolve();
+        }, { once: true }));
+        await Promise.race([Promise.all(entries.map((e) => e.promise)), aborted]);
+        finished = true;
+    }
+    loadInstrument(manifest, name, signal) {
+        const known = this.loading.get(name);
+        if (known)
+            return known;
+        const def = manifest.instruments[name];
+        const files = def.samples.map((s) => this.fetchLimited(async () => {
+            if (signal?.aborted)
+                throw new Error('aborted');
+            const res = await fetch(this.baseUrl + s.file, signal ? { signal } : undefined);
+            if (!res.ok)
+                throw new Error(`${s.file}: HTTP ${res.status}`);
+            const buffer = await decode(this.ctx, await res.arrayBuffer());
+            return { ...s, buffer, shift: shiftFor(s, buffer) };
+        }).catch((err) => {
+            if (!signal?.aborted)
+                console.warn(`${LOG} ${name}: ${err instanceof Error ? err.message : String(err)}`);
+            return null;
+        }));
+        const entry = { files, signal, promise: Promise.resolve() };
+        entry.promise = Promise.all(files).then((loaded) => {
+            // unloaded or aborted in the meantime: forget it
+            if (this.loading.get(name) !== entry || signal?.aborted)
+                return;
+            const samples = loaded.filter((s) => s !== null);
+            if (!samples.length) {
+                console.warn(`${LOG} ${name} is missing (no sample could be loaded)`);
+                return;
+            }
+            // An instrument that lacks only some samples stays usable with the rest.
+            this.ready.set(name, { ...def, name, samples, last: null, voices: [] });
+        });
+        this.loading.set(name, entry);
+        return entry;
+    }
+    /**
+     * Forget instruments (no argument: all of them), so their audio can be
+     * garbage collected. Notes that are sounding play on; a later `load()`
+     * fetches them again.
+     */
+    unload(instruments) {
+        const names = instruments ? [...instruments] : [...this.loading.keys(), ...this.ready.keys()];
+        for (const n of names) {
+            this.loading.delete(n);
+            this.ready.delete(n);
+        }
+    }
+    /**
+     * Browsers keep an AudioContext suspended until the user interacts with
+     * the page. This resumes it on the first click, touch or key press on
+     * `target` (default: the document); the promise resolves once it runs.
+     */
+    unlock(target) {
+        const ctx = this.ctx;
+        if (typeof ctx.resume !== 'function' || ctx.state === 'running')
+            return Promise.resolve();
+        const el = target ?? (typeof document !== 'undefined' ? document : null);
+        if (!el)
+            return ctx.resume();
+        const events = ['pointerdown', 'keydown', 'touchend'];
+        return new Promise((resolve) => {
+            const off = () => events.forEach((e) => el.removeEventListener(e, on, true));
+            const on = () => {
+                void ctx.resume().then(() => {
+                    if (ctx.state !== 'running')
+                        return;
+                    off();
+                    resolve();
+                }, () => { });
+            };
+            events.forEach((e) => el.addEventListener(e, on, true));
+        });
+    }
+    defaultOut() {
+        this.defaultBus ??= this.bus();
+        return this.defaultBus.input;
+    }
+    /**
+     * A mixer channel: dry to `destination`, plus a `reverb` share into the
+     * shared reverb. Give each group of sounds (say, the music and the sound
+     * effects) a bus of its own, so they can be faded separately.
+     */
+    bus(options = {}) {
+        return createBus(this.ctx, this.output, this.reverbIn, options);
+    }
+    /**
+     * One note at the absolute audio-clock time `at`. Returns null when the
+     * instrument is not loaded (yet) - an app should not break just because
+     * its samples are still on the way.
+     */
+    note(options) {
+        const { at, duration, velocity = 0.7, velocityEnd, out, pan = 0, detune = 0, variant, damp } = options;
+        const midi = toMidi(options.midi);
+        let instrument = options.instrument;
+        // Timpani rolls live as an instrument of their own, but can also be
+        // addressed as a variant of the timpani.
+        if (instrument === 'timpani' && variant === 'roll')
+            instrument = 'timpaniRoll';
+        const inst = this.ready.get(instrument);
+        if (!inst)
+            return null;
+        const ctx = this.ctx;
+        const now = ctx.currentTime;
+        const t = Math.max(at !== undefined && Number.isFinite(at) ? at : now, now);
+        const hasDur = duration !== undefined && Number.isFinite(duration) && duration > 0;
+        const velEnd = hasDur && velocityEnd !== undefined && Number.isFinite(velocityEnd) ? velocityEnd : undefined;
+        let s;
+        let rate;
+        if (inst.pitched) {
+            if (midi === null || !Number.isFinite(midi))
+                return null;
+            // a crescendo uses the layer of its loudest point
+            s = pickSample(inst.samples, midi, Math.max(velocity, velEnd ?? 0));
+            if (!s)
+                return null;
+            rate = playbackRate(midi, s.midi ?? midi, detune, s.tune || 0);
+        }
+        else {
+            s = pickVariant(inst.samples, variant, inst.defaultVariant, inst.last);
+            inst.last = s;
+            rate = Math.pow(2, detune / 1200);
+        }
+        if (!s)
+            return null;
+        const buf = s.buffer;
+        const shift = s.shift || 0;
+        const baseOffset = s.offset ?? 0;
+        const offset = baseOffset + shift;
+        const release = Math.max(0.01, inst.release ?? 0.3);
+        const level = (inst.gain ?? 1) * (s.gain ?? 1);
+        const amp = level * velocityGain(velocity, s.vel ?? 1);
+        const ampEnd = velEnd === undefined ? amp : level * velocityGain(velEnd, s.vel ?? 1);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.playbackRate.value = rate;
+        const env = ctx.createGain();
+        const stopper = ctx.createGain(); // only for Voice.stop(), see below
+        const attack = inst.sustain ? ATTACK : ATTACK_HIT;
+        env.gain.setValueAtTime(0, t);
+        env.gain.linearRampToValueAtTime(amp, t + attack);
+        if (hasDur && ampEnd !== amp)
+            env.gain.linearRampToValueAtTime(ampEnd, t + Math.max(duration, attack * 2));
+        src.connect(env).connect(stopper);
+        let tail = stopper;
+        if (pan) {
+            const p = ctx.createStereoPanner();
+            p.pan.value = Math.max(-1, Math.min(1, pan));
+            stopper.connect(p);
+            tail = p;
+        }
+        tail.connect(out ? nodeOf(out) : this.defaultOut());
+        // How long the sample lasts without looping (in real time)
+        const natural = (buf.duration - offset) / rate;
+        let releaseAt = null;
+        if (inst.sustain) {
+            if (hasDur) {
+                releaseAt = t + duration;
+                if (s.loopEnd && s.loopStart !== undefined && duration + release > (s.loopEnd - baseOffset) / rate - 0.02) {
+                    src.loop = true;
+                    src.loopStart = s.loopStart + shift;
+                    src.loopEnd = s.loopEnd + shift;
+                }
+            }
+            // without a duration: play through once, the file fades out by itself
+        }
+        else if (hasDur && (damp ?? inst.damp)) {
+            releaseAt = t + duration;
+        }
+        let endAt = t + natural + 0.02;
+        if (releaseAt !== null) {
+            const ra = Math.max(releaseAt, t + attack * 2);
+            env.gain.setValueAtTime(ampEnd, ra);
+            // Decay exponentially: with a time constant of release/5 the note is
+            // at -43 dB after `release`, and inaudible when it is cut after that.
+            env.gain.setTargetAtTime(0, ra, release / 5);
+            const stopAt = ra + release * 1.3;
+            endAt = src.loop ? stopAt : Math.min(endAt, stopAt);
+        }
+        this.limitVoices(inst, t);
+        src.start(t, offset);
+        src.stop(endAt);
+        let endTime = endAt;
+        let stopFrom = Infinity;
+        src.onended = () => {
+            src.disconnect();
+            env.disconnect();
+            stopper.disconnect();
+            if (tail !== stopper)
+                tail.disconnect();
+        };
+        const voice = {
+            startTime: t,
+            get endTime() {
+                return endTime;
+            },
+            // Stopping goes through a gain node of its own. That way nothing of the
+            // envelope above has to be cancelled (cancelScheduledValues in the
+            // middle of a ramp jumps, depending on the browser) - a second fader
+            // is simply turned down.
+            stop: (when = ctx.currentTime, rel = 0.1) => {
+                const from = Math.max(when, ctx.currentTime);
+                if (from >= stopFrom)
+                    return;
+                stopFrom = from;
+                const r = Math.max(0.005, rel);
+                stopper.gain.cancelScheduledValues(from);
+                stopper.gain.setValueAtTime(1, from);
+                stopper.gain.setTargetAtTime(0, from, r / 5);
+                const end = from + r * 1.3 + 0.01;
+                if (end < endTime) {
+                    endTime = end;
+                    try {
+                        src.stop(end);
+                    }
+                    catch { /* some browsers allow stop() only once - the fader is closed anyway */ }
+                }
+            },
+        };
+        inst.voices.push(voice);
+        return voice;
+    }
+    /** Make room for a voice at `t`: fade out the oldest if too many sound then. */
+    limitVoices(inst, t) {
+        const now = this.ctx.currentTime;
+        inst.voices = inst.voices.filter((v) => v.endTime > now);
+        const sounding = inst.voices.filter((v) => v.startTime <= t && v.endTime > t);
+        if (sounding.length < this.maxVoices)
+            return;
+        let oldest = sounding[0];
+        for (const v of sounding)
+            if (v.startTime < oldest.startTime)
+                oldest = v;
+        oldest.stop(t, 0.05);
+        inst.voices = inst.voices.filter((v) => v !== oldest);
+    }
+    /**
+     * Play a score. It is planned only a short stretch ahead (see
+     * scheduler.ts), so `stop()` takes effect at once, loops run forever and
+     * the tempo can change while it plays.
+     */
+    play(score, options = {}) {
+        return this.perform(score, options, { callbacks: true });
+    }
+    /**
+     * Render a score offline, faster than real time, into an AudioBuffer -
+     * e.g. for `encodeWav()`. Loads whatever instruments the score needs
+     * first. Needs `OfflineAudioContext` (any browser).
+     */
+    async render(score, options = {}) {
+        const { sampleRate = 44100, channels = 2, repeat = 1, tail = 3, bus, ...play } = options;
+        if (typeof OfflineAudioContext === 'undefined')
+            throw new Error('render() needs OfflineAudioContext');
+        const names = new Set(score.parts.map((p) => p.instrument));
+        if (names.has('timpani'))
+            names.add('timpaniRoll'); // variant 'roll'
+        const manifest = this.manifestData ?? (await this.load([]), this.manifestData);
+        await this.load([...names].filter((n) => !manifest || n in manifest.instruments));
+        const passes = Math.max(1, Math.floor(repeat));
+        const loop = passes > 1;
+        const { lengthBeats, timeline } = timelineFor(score, { ...play, loop }, 0);
+        const until = passes * lengthBeats;
+        const seconds = Math.max(0.1, timeline.time(until) + Math.max(0, tail));
+        const ctx = new OfflineAudioContext(channels, Math.ceil(seconds * sampleRate), sampleRate);
+        const child = new Orchestra(ctx, { ...this.options, manifest: manifest ?? undefined, baseUrl: this.baseUrl });
+        for (const [n, inst] of this.ready)
+            child.ready.set(n, { ...inst, last: null, voices: [] });
+        child.perform(score, { ...play, at: 0, loop, out: child.bus(bus ?? {}) }, { until, lookahead: seconds });
+        return ctx.startRendering();
+    }
+    perform(score, options, extra) {
+        const { at, transpose = 0, out, loop = false, velocity = 1, from = 0, fadeIn } = options;
+        const ctx = this.ctx;
+        const start = Math.max(at !== undefined && Number.isFinite(at) ? at : ctx.currentTime + 0.05, ctx.currentTime);
+        const { base, lengthBeats, timeline } = timelineFor(score, { ...options, loop }, start);
+        const beatsPerBar = score.beatsPerBar || 4;
+        const events = flattenScore(score, { velocity });
+        const cues = flattenDynamics(score);
+        const until = extra.until ?? (loop ? Infinity : lengthBeats);
+        // An OfflineAudioContext has no clock to wait for: plan everything.
+        const lookahead = extra.lookahead ?? (isOffline(ctx) ? ctx.length / ctx.sampleRate - start + 1 : undefined);
+        // A fader per performance, so stop() can fade out without touching the
+        // bus, on which other things may still be playing.
+        const gain = ctx.createGain();
+        if (fadeIn !== undefined && fadeIn > 0) {
+            gain.gain.setValueAtTime(0, start);
+            gain.gain.linearRampToValueAtTime(1, start + fadeIn);
+        }
+        gain.connect(out ? nodeOf(out) : this.defaultOut());
+        // Per part: a fader for part(...).fade(), and a gain for the dynamics.
+        const localFrom = loop && lengthBeats > 0 ? from - Math.floor(from / lengthBeats) * lengthBeats : from;
+        const parts = score.parts.map((p, index) => {
+            const fader = ctx.createGain();
+            fader.gain.value = Math.max(0, p.gain ?? 1);
+            fader.connect(gain);
+            let input = fader;
+            if (p.dynamics?.length) {
+                input = ctx.createGain();
+                const { gain: g0, rampTo } = dynamicsAt(p.dynamics, localFrom);
+                input.gain.setValueAtTime(g0, start);
+                // starting in the middle of a ramp: finish it
+                if (rampTo)
+                    input.gain.linearRampToValueAtTime(rampTo.gain, timeline.time(from + rampTo.beat - localFrom));
+                input.connect(fader);
+            }
+            const control = {
+                index,
+                name: p.name,
+                fade: (g, seconds = 1) => rampFromNow(ctx, fader.gain, Math.max(0, g), Math.max(0.01, seconds)),
+                set: (g) => rampFromNow(ctx, fader.gain, Math.max(0, g), 0.02),
+            };
+            return { input, fader, control };
+        });
+        let tr = transpose;
+        let stopFrom = Infinity;
+        let ended = false;
+        let scheduler = null;
+        const disconnect = (afterSeconds) => setTimeout(() => {
+            gain.disconnect();
+            for (const p of parts) {
+                p.input.disconnect();
+                p.fader.disconnect();
+            }
+        }, afterSeconds * 1000);
+        const perf = {
+            startTime: start,
+            beatsPerBar,
+            lengthBeats,
+            loop,
+            get bpm() {
+                return base * timeline.factor;
+            },
+            get transpose() {
+                return tr;
+            },
+            get endTime() {
+                return Number.isFinite(until) ? timeline.time(until) : Infinity;
+            },
+            onEnd: null,
+            onBeat: null,
+            onBar: null,
+            get position() {
+                return wrapPosition(Math.max(from, timeline.beat(ctx.currentTime)), lengthBeats, loop);
+            },
+            get playing() {
+                return !ended && ctx.currentTime < stopFrom;
+            },
+            timeOf: (beat) => timeline.time(beat),
+            nextBar: (after) => {
+                const b = Math.max(from, timeline.beat(after ?? Math.max(ctx.currentTime + 0.05, start)));
+                return timeline.time(nextBarBeat(b, beatsPerBar, lengthBeats, loop));
+            },
+            nextBeat: (after) => {
+                const b = Math.max(from, timeline.beat(after ?? Math.max(ctx.currentTime + 0.05, start)));
+                return timeline.time(Math.min(Math.ceil(b - 1e-9), until));
+            },
+            setTempo: (bpm) => {
+                if (!(bpm > 0) || !scheduler?.running)
+                    return;
+                // from what is planned on, so nothing already scheduled moves
+                timeline.setFactor(bpm / base, Math.max(scheduler.planned, timeline.beat(ctx.currentTime)));
+            },
+            setTranspose: (semitones) => {
+                if (Number.isFinite(semitones))
+                    tr = semitones;
+            },
+            part: (key) => (typeof key === 'number' ? parts[key] : parts.find((p) => p.control.name === key))?.control ?? null,
+            stop: (fadeSeconds = 0.5, when) => {
+                const now = ctx.currentTime;
+                const from = Math.max(when ?? now, now);
+                if (from >= stopFrom || ended)
+                    return;
+                stopFrom = from;
+                const f = Math.max(0.02, fadeSeconds);
+                if (from <= now)
+                    rampFromNow(ctx, gain.gain, 0, f);
+                else {
+                    if (typeof gain.gain.cancelAndHoldAtTime === 'function')
+                        gain.gain.cancelAndHoldAtTime(from);
+                    else {
+                        gain.gain.cancelScheduledValues(from);
+                        gain.gain.setValueAtTime(gain.gain.value, from);
+                    }
+                    gain.gain.linearRampToValueAtTime(0, from + f);
+                }
+                scheduler?.stop(from + f);
+                disconnect(from - now + f + 0.2);
+            },
+        };
+        const beatCallback = (beat, time) => {
+            setTimeout(() => {
+                if (time >= stopFrom)
+                    return;
+                perf.onBeat?.(beat, time);
+                const bar = barAt(beat, beatsPerBar, lengthBeats, loop);
+                if (bar !== null)
+                    perf.onBar?.(bar, time);
+            }, Math.max(0, (time - ctx.currentTime) * 1000));
+        };
+        scheduler = startScheduler({
+            events,
+            lengthBeats,
+            loop,
+            timeline,
+            from,
+            until,
+            lookahead,
+            now: () => ctx.currentTime,
+            schedule: (ev, time, duration) => this.note({
+                instrument: ev.instrument, // came from the Score<I>
+                midi: ev.midi === null ? null : ev.midi + tr,
+                at: time,
+                duration,
+                velocity: ev.velocity,
+                pan: ev.pan,
+                variant: ev.variant,
+                out: parts[ev.part]?.input ?? gain,
+            }),
+            cues,
+            onCue: (cue, time, beat) => {
+                const param = parts[cue.part]?.input.gain;
+                if (!param)
+                    return;
+                param.setValueAtTime(cue.gain, time);
+                if (cue.rampTo)
+                    param.linearRampToValueAtTime(cue.rampTo.gain, timeline.time(beat + cue.rampTo.beat - cue.beat));
+            },
+            onBeat: extra.callbacks && !isOffline(ctx) ? beatCallback : undefined,
+            onEnd: () => {
+                ended = true;
+                disconnect(8); // let the reverb tail ring
+                perf.onEnd?.(perf);
+            },
+        });
+        return perf;
+    }
+}
+/** Decoder delay of this browser for one sample, see decoderShift. */
+function shiftFor(s, buffer) {
+    if (s.duration === undefined || !(s.duration > 0) || buffer.duration - s.duration < 0.01)
+        return 0;
+    const onset = detectOnset(buffer.getChannelData(0), buffer.sampleRate, -36, false) / buffer.sampleRate;
+    return decoderShift(buffer.duration, s.duration, onset, s.mark);
+}
+//# sourceMappingURL=orchestra.js.map

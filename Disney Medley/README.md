@@ -38,4 +38,12 @@ Song start times differ slightly between drafts. Drafts 1 and 2 and `original.mp
 - `METRICS.md` holds the objective checks run on each draft.
 - `FINAL_PLAN.md` covers the sample sources and techniques.
 
-The code that produced these drafts is in [`../pipeline`](../pipeline).
+## Config (`config/`)
+
+| File | What it does |
+| --- | --- |
+| `piece.json` | Fermata positions and the mix balance (loudness targets plus passage automation tuned from listener feedback). |
+| `make_input.sh` | Builds the render input from the original MIDI: `prepare.py` assigns the Sibelius tracks to sounds, then `tempo_plus5.py` and `tempo_fixes.py` apply the tempo edits. |
+| `listening_page.json` | Draft list and song start times for the listening-notes page. |
+
+To rebuild the latest draft, run `pipeline/run.sh "Disney Medley" draft9_rebuild` from the repo root. It rebuilds the draft 9 master WAV from `score/disney_medley_original.mid`; the result was checked to be sample-for-sample identical to the original draft 9 master. The code is in [`../pipeline`](../pipeline).

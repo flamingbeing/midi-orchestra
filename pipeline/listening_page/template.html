@@ -1,0 +1,469 @@
+<title>__TITLE_SHORT__ Listening Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a rehearsal desk - player and waveform on top (the "score"), the note-taking form beside the list of pencil marks below. */
+:root {
+  --paper: #f6f7f4;
+  --sheet: #ffffff;
+  --ink: #1b2330;
+  --muted: #5d6777;
+  --rule: #d9dde3;
+  --accent: #2f55b8;          /* rehearsal-mark blue */
+  --accent-ink: #ffffff;
+  --mark: #f2c94c;            /* highlighter on the score */
+  --mark-soft: rgba(242, 201, 76, .32);
+  --pin: rgba(47, 85, 184, .16);
+  --pin-edge: rgba(47, 85, 184, .55);
+  --wave: #9aa6b8;
+  --wave-played: #1b2330;
+  --danger: #b4372f;
+  --ok: #2e7d4f;
+  --display: "Young Serif", Georgia, "Times New Roman", serif;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #12161d; --sheet: #1a2029; --ink: #e8ebf0; --muted: #9aa4b3; --rule: #2c3440;
+    --accent: #7d9cf0; --accent-ink: #0d1422; --mark: #e9c45a; --mark-soft: rgba(233, 196, 90, .22);
+    --pin: rgba(125, 156, 240, .18); --pin-edge: rgba(125, 156, 240, .65); --wave: #4c586a; --wave-played: #e8ebf0;
+    --danger: #ef8a80; --ok: #6fcf97; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #12161d; --sheet: #1a2029; --ink: #e8ebf0; --muted: #9aa4b3; --rule: #2c3440;
+  --accent: #7d9cf0; --accent-ink: #0d1422; --mark: #e9c45a; --mark-soft: rgba(233, 196, 90, .22);
+  --pin: rgba(125, 156, 240, .18); --pin-edge: rgba(125, 156, 240, .65); --wave: #4c586a; --wave-played: #e8ebf0;
+  --danger: #ef8a80; --ok: #6fcf97; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+h1 { font: 400 clamp(26px, 4vw, 38px)/1.1 var(--display); margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 62ch; }
+.badge { font: 500 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.badge.live { color: var(--ok); border-color: var(--ok); }
+.badge.local { color: var(--danger); border-color: var(--danger); }
+
+/* the score: player + waveform */
+.score { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; }
+.transport { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+button { font: inherit; cursor: pointer; }
+.play { width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.play svg { width: 22px; height: 22px; fill: currentColor; }
+.time { font: 500 15px var(--mono); font-variant-numeric: tabular-nums; }
+.time .total { color: var(--muted); }
+.song-now { font-family: var(--display); font-size: 18px; min-width: 0; flex: 1 1 200px; }
+.song-now small { display: block; font: 12px var(--body); color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.wave-box { position: relative; height: 150px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; border-radius: 6px; overflow: hidden; }
+.wave-box canvas { width: 100%; height: 100%; display: block; }
+.hint { font-size: 13px; color: var(--muted); margin: 0; }
+.songs { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip, .songs button { border: 1px solid var(--rule); background: transparent; color: var(--ink); border-radius: 999px; padding: 4px 11px; font-size: 13px; }
+.songs button:hover, .chip:hover { border-color: var(--accent); }
+.songs button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+/* desk: form + notes */
+.desk { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .desk { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+h2 { font: 400 20px/1.2 var(--display); margin: 0; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--rule); }
+.tabs button { border: 0; background: none; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 700; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.sel { display: grid; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--mark-soft); }
+.sel-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font: 500 14px var(--mono); font-variant-numeric: tabular-nums; }
+.sel-row .lbl { font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.nudge { border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); border-radius: 6px; padding: 2px 7px; font: 500 12px var(--mono); }
+.sel-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ghost { border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); border-radius: 8px; padding: 6px 12px; font-size: 14px; }
+a.ghost { text-decoration: none; display: inline-block; }
+.ghost[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+legend { font: 700 12px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0; margin-bottom: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+textarea, input[type=text] { width: 100%; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; }
+textarea { min-height: 96px; resize: vertical; }
+.primary { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 8px; padding: 10px 16px; font-weight: 700; justify-self: start; }
+.primary:disabled { opacity: .45; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--mark); outline-offset: 2px; }
+.status { font-size: 13px; color: var(--muted); min-height: 1.4em; margin: 0; }
+
+.notes { display: grid; gap: 10px; }
+.note { border: 1px solid var(--rule); border-left: 4px solid var(--pin-edge); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; min-width: 0; }
+.note.global { border-left-color: var(--mark); }
+.note.done { opacity: .6; }
+.note-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.stamp { border: 0; background: var(--pin); color: var(--ink); border-radius: 6px; padding: 2px 8px; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; }
+.stamp:hover { background: var(--pin-edge); color: var(--accent-ink); }
+.where { font-size: 13px; color: var(--muted); }
+.tag { font-size: 12px; border-radius: 999px; padding: 1px 8px; background: var(--paper); border: 1px solid var(--rule); }
+.note p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 12px; color: var(--muted); }
+.meta button { border: 0; background: none; color: var(--muted); text-decoration: underline; padding: 0; font-size: 12px; }
+.meta button.del:hover { color: var(--danger); }
+.handoff { background: var(--mark-soft); border: 1px solid var(--mark); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.handoff p { margin: 0; max-width: 70ch; }
+.handoff-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.handoff textarea { min-height: 120px; font: 13px/1.45 var(--mono); }
+.empty { color: var(--muted); border: 1px dashed var(--rule); border-radius: 8px; padding: 18px; text-align: center; }
+.list-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>__TITLE__: listening notes</h1>
+      <p class="sub">Play the recording, drag across the waveform to mark a passage you'd change, then say what you hear. Notes about the whole piece go under General.</p>
+    </div>
+    <span id="saveMode" class="badge">Saved on this device</span>
+  </header>
+
+  <section class="handoff" id="handoff" hidden aria-labelledby="handoffTitle">
+    <h2 id="handoffTitle">Your comments stay on this device</h2>
+    <p>Nothing you write is sent anywhere automatically. When you're done (or whenever you like), tap <strong>Copy my comments</strong> and paste them into a message to the person who shared this page. Your comments are kept in this browser, so you can close the page and carry on later.</p>
+    <div class="handoff-row">
+      <button class="primary" id="copyMine">Copy my comments</button>
+      <button class="ghost" id="showText" aria-expanded="false">Show as text</button>
+      <span class="status" id="handoffStatus" role="status"></span>
+    </div>
+    <textarea id="exportText" readonly hidden aria-label="Your comments as text"></textarea>
+  </section>
+
+  <section class="score" aria-label="Recording">
+    <div class="transport">
+      <button id="play" class="play" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg></button>
+      <div class="time"><span id="cur">0:00.0</span> <span class="total">/ <span id="dur">7:28</span></span></div>
+      <div class="song-now"><small>Now playing</small><span id="songNow">Belle</span></div>
+      <select id="draftSel" aria-label="Which draft"></select>
+      <a class="ghost" id="dlBtn" href="#" target="_blank" rel="noopener">Download MP3</a>
+      <button class="ghost" id="dlCopy" title="Copy the MP3 link to paste into a browser or message">Copy link</button>
+      <span class="status" id="dlStatus" role="status"></span>
+    </div>
+    <div class="wave-box" id="waveBox" role="slider" aria-label="Waveform: click to jump, drag to select a passage" tabindex="0" aria-valuemin="0" aria-valuenow="0">
+      <canvas id="wave"></canvas>
+    </div>
+    <p class="hint">Click to jump. Drag to select a passage. Blue bands are passages someone already commented on. Space bar plays and pauses.</p>
+    <div class="songs" id="songs" aria-label="Jump to a song"></div>
+    <audio id="audio" preload="metadata"></audio>
+  </section>
+
+  <div class="desk">
+    <section class="panel" aria-labelledby="formTitle">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tabPart" aria-selected="true">Comment on a passage</button>
+        <button role="tab" id="tabGlobal" aria-selected="false">General comment</button>
+      </div>
+      <h2 id="formTitle" hidden>New comment</h2>
+
+      <div id="selBox" class="sel">
+        <div class="sel-row">
+          <span class="lbl">From</span><span id="selA">–</span>
+          <button class="nudge" data-n="a,-1">−1s</button><button class="nudge" data-n="a,1">+1s</button>
+          <span class="lbl">to</span><span id="selB">–</span>
+          <button class="nudge" data-n="b,-1">−1s</button><button class="nudge" data-n="b,1">+1s</button>
+        </div>
+        <div class="sel-row"><span class="where" id="selSong">Drag across the waveform to choose a passage.</span></div>
+        <div class="sel-actions">
+          <button class="ghost" id="playSel">Play passage</button>
+          <button class="ghost" id="loopSel" aria-pressed="false">Loop passage</button>
+          <button class="ghost" id="markNow">Mark 5 s around playhead</button>
+        </div>
+      </div>
+
+      <fieldset id="whatSet">
+        <legend>What's wrong (pick any)</legend>
+        <div class="chips" id="whatChips"></div>
+      </fieldset>
+      <fieldset id="whoSet">
+        <legend>Which instrument</legend>
+        <div class="chips" id="whoChips"></div>
+      </fieldset>
+      <label for="text" class="lbl" style="font:700 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">In your own words</label>
+      <textarea id="text" placeholder="e.g. The clarinet here sounds thin and too quiet next to the strings."></textarea>
+      <label for="who" style="font:700 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Your name (optional)</label>
+      <input type="text" id="who" placeholder="So we know who said it">
+      <button class="primary" id="save">Save comment</button>
+      <p class="status" id="status" role="status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="listTitle">
+      <div class="list-head">
+        <h2 id="listTitle">Comments</h2>
+        <div class="chips" role="group" aria-label="Show">
+          <button class="chip" data-f="all" aria-pressed="true">All</button>
+          <button class="chip" data-f="part" aria-pressed="false">Passages</button>
+          <button class="chip" data-f="global" aria-pressed="false">General</button>
+          <button class="chip" id="copyAll">Copy all as text</button>
+        </div>
+      </div>
+      <div class="notes" id="notes"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const DRAFTS = __DRAFTS__;            // newest first; the first one is selected by default
+let SONGS = DRAFTS[0].songs;
+const WHAT = ["Too loud", "Too soft", "Hard to hear the tune", "Timing feels off", "Sounds fake / robotic", "Harsh or squeaky", "Muddy / blurry", "Too echoey", "Too dry", "Notes uneven", "Abrupt start or stop", "Love this part"];
+const WHO = ["Flute", "Clarinet", "Violins", "Violas", "Cellos", "Plucked strings", "Harp", "Celesta", "Glockenspiel", "Piano", "Guitar", "Snare drum", "Whole orchestra"];
+
+const $ = (id) => document.getElementById(id);
+const audio = $("audio"), canvas = $("wave"), box = $("waveBox");
+let draft = DRAFTS[0];
+let sel = null;            // {a, b} seconds
+let loop = false, mode = "part", filter = "all";
+let notes = [];            // {id, kind, start, end, what[], who[], text, by, draft, created, done}
+let db = null, user = null, myId = null, LOCAL = false;
+const picked = { what: new Set(), who: new Set() };
+
+const fmt = (t) => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t - m * 60; return m + ":" + (s < 10 ? "0" : "") + s.toFixed(1); };
+const fmtShort = (t) => { t = Math.max(0, Math.round(t || 0)); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
+const songAt = (t) => { let s = SONGS[0][1]; for (const [st, n] of SONGS) if (t >= st - 0.05) s = n; return s; };
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+// ---------- drafts ----------
+for (const d of DRAFTS) { const o = document.createElement("option"); o.value = d.id; o.textContent = d.label; $("draftSel").append(o); }
+$("draftSel").value = draft.id;
+$("draftSel").addEventListener("change", () => { draft = DRAFTS.find((d) => d.id === $("draftSel").value); loadDraft(); });
+function loadDraft() {
+  const wasPlaying = !audio.paused, at = audio.currentTime || 0;
+  SONGS = draft.songs; buildSongs(); sel = null; showSel(); loop = false; $("loopSel").setAttribute("aria-pressed", "false");
+  audio.src = draft.src; if (at) { audio.currentTime = Math.min(at, draft.dur - 0.1); } if (wasPlaying) playIt(); $("dur").textContent = fmtShort(draft.dur); box.setAttribute("aria-valuemax", draft.dur.toFixed(0)); draw(); render(); setDl(); }
+
+// ---------- download (MP3 hosted on GitHub) ----------
+const GH = "__GH__";
+function setDl() { const a = $("dlBtn"); a.href = GH + draft.src.split("/").pop(); a.title = "Download " + draft.label + " as MP3"; }
+setDl();
+$("dlCopy").addEventListener("click", async () => {
+  const u = $("dlBtn").href;
+  try { await navigator.clipboard.writeText(u); $("dlStatus").textContent = "Link copied."; }
+  catch (e) { prompt("Copy this link:", u); }
+  setTimeout(() => ($("dlStatus").textContent = ""), 2500);
+});
+
+// ---------- songs ----------
+function buildSongs() {
+  $("songs").textContent = "";
+  for (const [t, n] of SONGS) {
+    const b = document.createElement("button"); b.textContent = n; b.dataset.t = t;
+    b.addEventListener("click", () => { seek(t); playIt(); }); $("songs").append(b);
+  }
+}
+
+// ---------- transport ----------
+function playIt() { audio.play().catch(() => setStatus("Tap play to start the recording.")); }
+$("play").addEventListener("click", () => (audio.paused ? playIt() : audio.pause()));
+audio.addEventListener("play", () => { $("playIcon").setAttribute("d", "M6 4.5h4v15H6zM14 4.5h4v15h-4z"); $("play").setAttribute("aria-label", "Pause"); tick(); });
+audio.addEventListener("pause", () => { $("playIcon").setAttribute("d", "M7 4.5v15l13-7.5z"); $("play").setAttribute("aria-label", "Play"); });
+audio.addEventListener("loadedmetadata", () => { if (isFinite(audio.duration)) { draft.dur = audio.duration; $("dur").textContent = fmtShort(audio.duration); draw(); } });
+function seek(t) { audio.currentTime = clamp(t, 0, draft.dur - 0.05); update(); }
+function tick() {
+  if (loop && sel && audio.currentTime >= sel.b) audio.currentTime = sel.a;
+  update(); if (!audio.paused) requestAnimationFrame(tick);
+}
+function update() {
+  const t = audio.currentTime || 0;
+  $("cur").textContent = fmt(t); $("songNow").textContent = songAt(t); box.setAttribute("aria-valuenow", t.toFixed(0));
+  document.querySelectorAll("#songs button").forEach((b, i) => {
+    const st = SONGS[i][0], en = i + 1 < SONGS.length ? SONGS[i + 1][0] : 1e9; b.classList.toggle("on", t >= st && t < en);
+  });
+  draw();
+}
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !/TEXTAREA|INPUT|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); audio.paused ? playIt() : audio.pause(); }
+  if (document.activeElement === box && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { seek(audio.currentTime + (e.key === "ArrowLeft" ? -5 : 5)); }
+});
+
+// ---------- waveform ----------
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function draw() {
+  const dpr = window.devicePixelRatio || 1, w = box.clientWidth, h = box.clientHeight;
+  if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+  const g = canvas.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const X = (t) => (t / draft.dur) * w, top = 18, H = h - top - 4;
+  // song bands
+  g.font = "11px " + css("--body"); g.textBaseline = "top";
+  SONGS.forEach(([st, n], i) => {
+    const x = X(st); g.fillStyle = css("--rule"); g.fillRect(x, 0, 1, h);
+    const nx = i + 1 < SONGS.length ? X(SONGS[i + 1][0]) : w;
+    if (nx - x > 46) { g.fillStyle = css("--muted"); const label = n.length * 6 > nx - x - 8 ? n.slice(0, Math.max(3, Math.floor((nx - x - 8) / 6))) + "…" : n; g.fillText(label, x + 4, 3); }
+  });
+  // existing comment regions
+  for (const n of visibleNotes()) if (n.kind === "part") { g.fillStyle = css("--pin"); g.fillRect(X(n.start), top, Math.max(2, X(n.end) - X(n.start)), H); }
+  // selection
+  if (sel) { g.fillStyle = css("--mark-soft"); g.fillRect(X(sel.a), top, X(sel.b) - X(sel.a), H); g.fillStyle = css("--mark"); g.fillRect(X(sel.a), top, 2, H); g.fillRect(X(sel.b) - 2, top, 2, H); }
+  // waveform bars
+  const P = draft.peaks, mid = top + H / 2, cur = audio.currentTime || 0, bw = w / P.length;
+  for (let i = 0; i < P.length; i++) {
+    const x = i * bw, a = Math.max(1, (P[i] / 100) * (H / 2 - 2));
+    g.fillStyle = (i + 0.5) / P.length * draft.dur <= cur ? css("--wave-played") : css("--wave");
+    g.fillRect(x, mid - a, Math.max(1, bw - 0.3), a * 2);
+  }
+  // playhead
+  g.fillStyle = css("--accent"); g.fillRect(X(cur) - 1, top - 2, 2, H + 4);
+}
+new ResizeObserver(draw).observe(box);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+
+let drag = null;
+const tAt = (e) => { const r = box.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * draft.dur; };
+box.addEventListener("pointerdown", (e) => { box.setPointerCapture(e.pointerId); drag = { t0: tAt(e), x0: e.clientX, moved: false }; });
+box.addEventListener("pointermove", (e) => {
+  if (!drag) return; if (Math.abs(e.clientX - drag.x0) > 4) drag.moved = true;
+  if (drag.moved) { const t = tAt(e); sel = { a: Math.min(drag.t0, t), b: Math.max(drag.t0, t) }; showSel(); draw(); }
+});
+box.addEventListener("pointerup", (e) => {
+  if (!drag) return;
+  if (!drag.moved) seek(drag.t0); else { setMode("part"); seek(sel.a); }
+  drag = null;
+});
+
+// ---------- selection ----------
+function showSel() {
+  $("selA").textContent = sel ? fmt(sel.a) : "–"; $("selB").textContent = sel ? fmt(sel.b) : "–";
+  $("selSong").textContent = sel ? songAt(sel.a) + (songAt(sel.a) !== songAt(sel.b) ? " → " + songAt(sel.b) : "") + " · " + (sel.b - sel.a).toFixed(1) + " s"
+    : "Drag across the waveform to choose a passage.";
+  validate();
+}
+document.querySelectorAll(".nudge").forEach((b) => b.addEventListener("click", () => {
+  if (!sel) return; const [k, d] = b.dataset.n.split(","); sel[k] = clamp(sel[k] + Number(d), 0, draft.dur);
+  if (sel.a > sel.b - 0.5) { if (k === "a") sel.a = sel.b - 0.5; else sel.b = sel.a + 0.5; } showSel(); draw();
+}));
+$("playSel").addEventListener("click", () => { if (sel) { seek(sel.a); playIt(); } });
+$("loopSel").addEventListener("click", () => { loop = !loop; $("loopSel").setAttribute("aria-pressed", String(loop)); if (loop && sel) { seek(sel.a); playIt(); } });
+$("markNow").addEventListener("click", () => { const t = audio.currentTime || 0; sel = { a: clamp(t - 3, 0, draft.dur), b: clamp(t + 2, 0, draft.dur) }; setMode("part"); showSel(); draw(); });
+
+// ---------- form ----------
+function chips(host, list, set) {
+  for (const w of list) {
+    const b = document.createElement("button"); b.className = "chip"; b.type = "button"; b.textContent = w; b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", () => { set.has(w) ? set.delete(w) : set.add(w); b.setAttribute("aria-pressed", String(set.has(w))); validate(); });
+    host.append(b);
+  }
+}
+chips($("whatChips"), WHAT, picked.what); chips($("whoChips"), WHO, picked.who);
+function setMode(m) {
+  mode = m; $("tabPart").setAttribute("aria-selected", String(m === "part")); $("tabGlobal").setAttribute("aria-selected", String(m === "global"));
+  $("selBox").hidden = m !== "part"; $("text").placeholder = m === "part" ? "e.g. The clarinet here sounds thin and too quiet next to the strings." : "e.g. Overall it sounds great, but the strings could be warmer throughout.";
+  validate();
+}
+$("tabPart").addEventListener("click", () => setMode("part"));
+$("tabGlobal").addEventListener("click", () => setMode("global"));
+$("text").addEventListener("input", validate);
+try { $("who").value = localStorage.getItem("__KEY__-who") || ""; } catch (e) {}
+function validate() {
+  const hasContent = $("text").value.trim() || picked.what.size || picked.who.size;
+  $("save").disabled = !hasContent || (mode === "part" && !sel);
+  $("save").textContent = mode === "part" ? "Save comment on this passage" : "Save general comment";
+}
+function setStatus(s) { $("status").textContent = s; }
+$("save").addEventListener("click", async () => {
+  const note = {
+    kind: mode, start: mode === "part" ? +sel.a.toFixed(2) : null, end: mode === "part" ? +sel.b.toFixed(2) : null,
+    song: mode === "part" ? songAt(sel.a) : null, what: [...picked.what], who: [...picked.who], text: $("text").value.trim(),
+    by: $("who").value.trim().slice(0, 60), author: myId, draft: draft.id, created: Date.now(), done: false,
+  };
+  try { localStorage.setItem("__KEY__-who", note.by); } catch (e) {}
+  $("save").disabled = true; setStatus("Saving…");
+  try {
+    if (db) await db.collection("comments").add(note);
+    else { note.id = "local-" + note.created; notes.push(note); saveLocal(); render(); if (!$("exportText").hidden) $("exportText").value = exportText(); }
+    setStatus(mode === "part" ? "Saved. Select another passage to keep going." : "Saved.");
+    $("text").value = ""; picked.what.clear(); picked.who.clear();
+    document.querySelectorAll("#whatChips .chip, #whoChips .chip").forEach((b) => b.setAttribute("aria-pressed", "false"));
+  } catch (e) {
+    setStatus(e && e.code === "invalid_argument" ? "You can read the comments but not add them. Ask for Contributor access, or use Copy all as text." : "Couldn't save (" + ((e && e.code) || "error") + "). Your text is still here; try again.");
+  }
+  validate();
+});
+
+// ---------- list ----------
+document.querySelectorAll("[data-f]").forEach((b) => b.addEventListener("click", () => {
+  filter = b.dataset.f; document.querySelectorAll("[data-f]").forEach((c) => c.setAttribute("aria-pressed", String(c === b))); render();
+}));
+function visibleNotes() {
+  return notes.filter((n) => (n.draft || "draft9") === draft.id && (filter === "all" || n.kind === filter))
+    .sort((x, y) => (x.kind === y.kind ? (x.kind === "part" ? x.start - y.start : x.created - y.created) : x.kind === "global" ? -1 : 1));
+}
+function render() {
+  const host = $("notes"); host.textContent = "";
+  const list = visibleNotes();
+  $("listTitle").textContent = "Comments" + (list.length ? " (" + list.length + ")" : "");
+  if (!list.length) {
+    const d = document.createElement("div"); d.className = "empty";
+    d.textContent = "No comments on " + draft.label + " yet. Drag across a passage you'd change and describe what you hear, or add a general comment.";
+    host.append(d); draw(); return;
+  }
+  for (const n of list) {
+    const el = document.createElement("article"); el.className = "note" + (n.kind === "global" ? " global" : "") + (n.done ? " done" : "");
+    const top = document.createElement("div"); top.className = "note-top";
+    if (n.kind === "part") {
+      const s = document.createElement("button"); s.className = "stamp"; s.textContent = fmt(n.start) + " – " + fmt(n.end);
+      s.title = "Play this passage"; s.addEventListener("click", () => { sel = { a: n.start, b: n.end }; showSel(); seek(n.start); playIt(); });
+      top.append(s); const w = document.createElement("span"); w.className = "where"; w.textContent = n.song || songAt(n.start); top.append(w);
+    } else { const w = document.createElement("span"); w.className = "where"; w.textContent = "General"; top.append(w); }
+    for (const t of [...(n.what || []), ...(n.who || [])]) { const c = document.createElement("span"); c.className = "tag"; c.textContent = t; top.append(c); }
+    el.append(top);
+    if (n.text) { const p = document.createElement("p"); p.textContent = n.text; el.append(p); }
+    const meta = document.createElement("div"); meta.className = "meta";
+    const who = document.createElement("span"); who.textContent = (n.by || "Someone") + " · " + new Date(n.created).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) + (n.done ? " · addressed" : "");
+    meta.append(who);
+    const del = document.createElement("button"); del.className = "del"; del.textContent = "Delete";
+    let armed = false;
+    del.addEventListener("click", async () => {
+      if (!armed) { armed = true; del.textContent = "Tap again to delete"; setTimeout(() => { armed = false; del.textContent = "Delete"; }, 3000); return; }
+      try { if (db && !String(n.id).startsWith("local-")) await db.collection("comments").doc(n.id).delete(); else { notes = notes.filter((x) => x !== n); saveLocal(); render(); } }
+      catch (e) { setStatus("Couldn't delete that comment (" + ((e && e.code) || "error") + ")."); }
+    });
+    if (!n.author || n.author === myId || LOCAL) meta.append(del);
+    el.append(meta); host.append(el);
+  }
+  draw();
+}
+function exportText() {
+  const lines = ["__TITLE__ " + draft.label + " - listening notes", ""];
+  for (const n of visibleNotes()) {
+    const tags = [...(n.what || []), ...(n.who || [])].join(", ");
+    lines.push((n.kind === "part" ? fmt(n.start) + "-" + fmt(n.end) + " (" + (n.song || "") + ")" : "General") + (tags ? " [" + tags + "]" : "") + (n.by ? " - " + n.by : ""));
+    if (n.text) lines.push("  " + n.text);
+  }
+  return lines.join("\n");
+}
+async function copyOut(statusFn) {
+  const txt = exportText(), n = visibleNotes().length;
+  try { await navigator.clipboard.writeText(txt); statusFn("Copied " + n + " comment" + (n === 1 ? "" : "s") + ". Paste them into a message."); }
+  catch (e) { const t = $("exportText"); t.hidden = false; t.value = txt; t.focus(); t.select(); $("showText").setAttribute("aria-expanded", "true"); statusFn("Select the text below and copy it."); }
+}
+$("copyAll").addEventListener("click", () => copyOut(setStatus));
+$("copyMine").addEventListener("click", () => copyOut((s) => { $("handoffStatus").textContent = s; }));
+$("showText").addEventListener("click", () => {
+  const t = $("exportText"), open = t.hidden; t.hidden = !open; $("showText").setAttribute("aria-expanded", String(open));
+  if (open) { t.value = exportText(); t.select(); }
+});
+
+// ---------- storage ----------
+function saveLocal() { try { localStorage.setItem("__KEY__-notes", JSON.stringify(notes)); } catch (e) {} }
+function useLocal() {
+  LOCAL = true; try { notes = JSON.parse(localStorage.getItem("__KEY__-notes") || "[]"); } catch (e) { notes = []; }
+  $("saveMode").textContent = "Saved on this device"; $("saveMode").className = "badge local";
+  $("handoff").hidden = false; render();
+}
+(async () => {
+  const c = window.claude;
+  if (true || !c || !c.use) { useLocal(); return; }
+  [db, user] = await Promise.all([c.use("db"), c.use("user")]);
+  if (!db) { useLocal(); return; }
+  try { myId = user ? await user.id() : null; } catch (e) {}
+  $("saveMode").textContent = "Shared with Claude"; $("saveMode").className = "badge live";
+  db.collection("comments").onSnapshot((snap) => {
+    notes = snap.docs.map((d) => ({ id: d.id, ...d.data() })); render();
+  }, (e) => { setStatus("Lost connection to the shared comments (" + (e.code || "error") + "). Reload to reconnect."); });
+})();
+
+setMode("part"); showSel(); loadDraft(); update();
+</script>

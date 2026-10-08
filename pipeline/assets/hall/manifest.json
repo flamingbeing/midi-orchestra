@@ -1,0 +1,250 @@
+{
+ "marco_tree/main_+90deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 90,
+  "distance_m": 3.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_+90deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 90,
+  "distance_m": 3.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_+75deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 75,
+  "distance_m": 4.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_+75deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 75,
+  "distance_m": 4.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_+60deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 60,
+  "distance_m": 3.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_+60deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 60,
+  "distance_m": 3.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_+45deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 45,
+  "distance_m": 4.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_+45deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 45,
+  "distance_m": 4.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_+30deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 30,
+  "distance_m": 3.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_+30deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 30,
+  "distance_m": 3.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_+15deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 15,
+  "distance_m": 4.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_+15deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 15,
+  "distance_m": 4.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_000deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 0,
+  "distance_m": 3.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_000deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": 0,
+  "distance_m": 3.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_-15deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -15,
+  "distance_m": 4.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_-15deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -15,
+  "distance_m": 4.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_-30deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -30,
+  "distance_m": 3.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_-30deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -30,
+  "distance_m": 3.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_-45deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -45,
+  "distance_m": 4.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_-45deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -45,
+  "distance_m": 4.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_-60deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -60,
+  "distance_m": 3.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_-60deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -60,
+  "distance_m": 3.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_-75deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -75,
+  "distance_m": 4.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_-75deg_4m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -75,
+  "distance_m": 4.0,
+  "kind": "amb"
+ },
+ "marco_tree/main_-90deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -90,
+  "distance_m": 3.0,
+  "kind": "main"
+ },
+ "marco_tree/amb_-90deg_3m.wav": {
+  "set": "marco_tree",
+  "azimuth_deg": -90,
+  "distance_m": 3.0,
+  "kind": "amb"
+ },
+ "detmold_kh/tree_S1.wav": {
+  "set": "detmold_kh",
+  "source": "S1",
+  "receiver": "R10"
+ },
+ "detmold_kh/tree_S2.wav": {
+  "set": "detmold_kh",
+  "source": "S2",
+  "receiver": "R10"
+ },
+ "detmold_kh/tree_S3.wav": {
+  "set": "detmold_kh",
+  "source": "S3",
+  "receiver": "R10"
+ },
+ "detmold_kh/tree_S4.wav": {
+  "set": "detmold_kh",
+  "source": "S4",
+  "receiver": "R10"
+ },
+ "detmold_kh/tree_S5.wav": {
+  "set": "detmold_kh",
+  "source": "S5",
+  "receiver": "R10"
+ },
+ "detmold_kh/tree_S6.wav": {
+  "set": "detmold_kh",
+  "source": "S6",
+  "receiver": "R10"
+ },
+ "detmold_kh/tree_S7.wav": {
+  "set": "detmold_kh",
+  "source": "S7",
+  "receiver": "R10"
+ },
+ "detmold_kh/tree_S8.wav": {
+  "set": "detmold_kh",
+  "source": "S8",
+  "receiver": "R10"
+ },
+ "detmold_kh/room_S1.wav": {
+  "set": "detmold_kh",
+  "source": "S1",
+  "receiver": "R126"
+ },
+ "detmold_kh/room_S2.wav": {
+  "set": "detmold_kh",
+  "source": "S2",
+  "receiver": "R126"
+ },
+ "detmold_kh/room_S3.wav": {
+  "set": "detmold_kh",
+  "source": "S3",
+  "receiver": "R126"
+ },
+ "detmold_kh/room_S4.wav": {
+  "set": "detmold_kh",
+  "source": "S4",
+  "receiver": "R126"
+ },
+ "detmold_kh/room_S5.wav": {
+  "set": "detmold_kh",
+  "source": "S5",
+  "receiver": "R126"
+ },
+ "detmold_kh/room_S6.wav": {
+  "set": "detmold_kh",
+  "source": "S6",
+  "receiver": "R126"
+ },
+ "detmold_kh/room_S7.wav": {
+  "set": "detmold_kh",
+  "source": "S7",
+  "receiver": "R126"
+ },
+ "detmold_kh/room_S8.wav": {
+  "set": "detmold_kh",
+  "source": "S8",
+  "receiver": "R126"
+ },
+ "generic/jacklyons_conductor.wav": {
+  "set": "generic"
+ },
+ "generic/jacklyons_stalls.wav": {
+  "set": "generic"
+ },
+ "generic/usina_m5.wav": {
+  "set": "generic"
+ },
+ "generic/old_synthetic_hall_ir.wav": {
+  "set": "generic"
+ }
+}

@@ -1,0 +1,137 @@
+{
+ "Violins": {
+  "marco_main": "marco_tree/main_+45deg_4m.wav",
+  "marco_amb": "marco_tree/amb_+45deg_4m.wav",
+  "marco_direct_ms": 6.39,
+  "detmold_tree": "detmold_kh/tree_S1.wav",
+  "detmold_room": "detmold_kh/room_S1.wav",
+  "detmold_direct_ms": 3.88,
+  "pan": -0.45
+ },
+ "Violins Pizz": {
+  "marco_main": "marco_tree/main_+45deg_4m.wav",
+  "marco_amb": "marco_tree/amb_+45deg_4m.wav",
+  "marco_direct_ms": 6.39,
+  "detmold_tree": "detmold_kh/tree_S1.wav",
+  "detmold_room": "detmold_kh/room_S1.wav",
+  "detmold_direct_ms": 3.88,
+  "pan": -0.45
+ },
+ "Violas": {
+  "marco_main": "marco_tree/main_-15deg_4m.wav",
+  "marco_amb": "marco_tree/amb_-15deg_4m.wav",
+  "marco_direct_ms": 7.73,
+  "detmold_tree": "detmold_kh/tree_S3.wav",
+  "detmold_room": "detmold_kh/room_S3.wav",
+  "detmold_direct_ms": 2.02,
+  "pan": 0.2
+ },
+ "Violas Pizz": {
+  "marco_main": "marco_tree/main_-15deg_4m.wav",
+  "marco_amb": "marco_tree/amb_-15deg_4m.wav",
+  "marco_direct_ms": 7.73,
+  "detmold_tree": "detmold_kh/tree_S3.wav",
+  "detmold_room": "detmold_kh/room_S3.wav",
+  "detmold_direct_ms": 2.02,
+  "pan": 0.2
+ },
+ "Cellos": {
+  "marco_main": "marco_tree/main_-45deg_4m.wav",
+  "marco_amb": "marco_tree/amb_-45deg_4m.wav",
+  "marco_direct_ms": 6.71,
+  "detmold_tree": "detmold_kh/tree_S4.wav",
+  "detmold_room": "detmold_kh/room_S4.wav",
+  "detmold_direct_ms": 3.51,
+  "pan": 0.45
+ },
+ "Cellos Pizz": {
+  "marco_main": "marco_tree/main_-45deg_4m.wav",
+  "marco_amb": "marco_tree/amb_-45deg_4m.wav",
+  "marco_direct_ms": 6.71,
+  "detmold_tree": "detmold_kh/tree_S4.wav",
+  "detmold_room": "detmold_kh/room_S4.wav",
+  "detmold_direct_ms": 3.51,
+  "pan": 0.45
+ },
+ "Strings Pad": {
+  "marco_main": "marco_tree/main_000deg_3m.wav",
+  "marco_amb": "marco_tree/amb_000deg_3m.wav",
+  "marco_direct_ms": 4.72,
+  "detmold_tree": "detmold_kh/tree_S2.wav",
+  "detmold_room": "detmold_kh/room_S2.wav",
+  "detmold_direct_ms": 2.13,
+  "pan": 0.0
+ },
+ "Harp": {
+  "marco_main": "marco_tree/main_+60deg_3m.wav",
+  "marco_amb": "marco_tree/amb_+60deg_3m.wav",
+  "marco_direct_ms": 3.06,
+  "detmold_tree": "detmold_kh/tree_S5.wav",
+  "detmold_room": "detmold_kh/room_S5.wav",
+  "detmold_direct_ms": 8.53,
+  "pan": -0.6
+ },
+ "Glockenspiel": {
+  "marco_main": "marco_tree/main_-30deg_3m.wav",
+  "marco_amb": "marco_tree/amb_-30deg_3m.wav",
+  "marco_direct_ms": 4.22,
+  "detmold_tree": "detmold_kh/tree_S8.wav",
+  "detmold_room": "detmold_kh/room_S8.wav",
+  "detmold_direct_ms": 8.23,
+  "pan": 0.3
+ },
+ "Celesta": {
+  "marco_main": "marco_tree/main_-30deg_3m.wav",
+  "marco_amb": "marco_tree/amb_-30deg_3m.wav",
+  "marco_direct_ms": 4.22,
+  "detmold_tree": "detmold_kh/tree_S7.wav",
+  "detmold_room": "detmold_kh/room_S7.wav",
+  "detmold_direct_ms": 7.32,
+  "pan": 0.25
+ },
+ "Flute": {
+  "marco_main": "marco_tree/main_+15deg_4m.wav",
+  "marco_amb": "marco_tree/amb_+15deg_4m.wav",
+  "marco_direct_ms": 8.16,
+  "detmold_tree": "detmold_kh/tree_S6.wav",
+  "detmold_room": "detmold_kh/room_S6.wav",
+  "detmold_direct_ms": 7.53,
+  "pan": -0.1
+ },
+ "Clarinet": {
+  "marco_main": "marco_tree/main_-15deg_4m.wav",
+  "marco_amb": "marco_tree/amb_-15deg_4m.wav",
+  "marco_direct_ms": 7.73,
+  "detmold_tree": "detmold_kh/tree_S7.wav",
+  "detmold_room": "detmold_kh/room_S7.wav",
+  "detmold_direct_ms": 7.32,
+  "pan": 0.1
+ },
+ "Piano": {
+  "marco_main": "marco_tree/main_-30deg_3m.wav",
+  "marco_amb": "marco_tree/amb_-30deg_3m.wav",
+  "marco_direct_ms": 4.22,
+  "detmold_tree": "detmold_kh/tree_S8.wav",
+  "detmold_room": "detmold_kh/room_S8.wav",
+  "detmold_direct_ms": 8.23,
+  "pan": 0.35
+ },
+ "Guitar": {
+  "marco_main": "marco_tree/main_+30deg_3m.wav",
+  "marco_amb": "marco_tree/amb_+30deg_3m.wav",
+  "marco_direct_ms": 4.17,
+  "detmold_tree": "detmold_kh/tree_S5.wav",
+  "detmold_room": "detmold_kh/room_S5.wav",
+  "detmold_direct_ms": 8.53,
+  "pan": -0.3
+ },
+ "Snare Drum": {
+  "marco_main": "marco_tree/main_000deg_3m.wav",
+  "marco_amb": "marco_tree/amb_000deg_3m.wav",
+  "marco_direct_ms": 4.72,
+  "detmold_tree": "detmold_kh/tree_S8.wav",
+  "detmold_room": "detmold_kh/room_S8.wav",
+  "detmold_direct_ms": 8.23,
+  "pan": 0.0
+ }
+}

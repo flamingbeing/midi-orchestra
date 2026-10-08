@@ -1,0 +1,106 @@
+{
+ "title": "Disney Medley",
+ "midi": "score/disney_medley_original.mid",
+ "fermata_end_ticks": [
+  45360,
+  50160,
+  398160,
+  483120,
+  760320
+ ],
+ "mix": {
+  "accomp": [
+   "Glockenspiel",
+   "Guitar",
+   "Harp",
+   "Piano"
+  ],
+  "target": {
+   "Flute": 1.8,
+   "Clarinet": 5.0,
+   "Violins": -3.5,
+   "Cellos": -3.5,
+   "Violas": -5,
+   "Piano": -4,
+   "Harp": -8.5,
+   "Guitar": -11,
+   "Celesta": -2.0,
+   "Glockenspiel": -9,
+   "Strings Pad": -5.0,
+   "Snare Drum": -10,
+   "Violins Pizz": -6,
+   "Violas Pizz": -6,
+   "Cellos Pizz": -6
+  },
+  "automation": {
+   "Cellos": [
+    [
+     130.0,
+     152.0,
+     5.0
+    ],
+    [
+     46.3,
+     77.3,
+     -1.5
+    ]
+   ],
+   "Clarinet": [
+    [
+     17.3,
+     46.3,
+     4.5
+    ],
+    [
+     304.6,
+     349.6,
+     -3.0
+    ],
+    [
+     128.0,
+     146.0,
+     -2.0
+    ],
+    [
+     351.9,
+     390.0,
+     3.0
+    ],
+    [
+     390.0,
+     412.4,
+     2.0
+    ]
+   ],
+   "Flute": [
+    [
+     153.0,
+     176.0,
+     2.0
+    ],
+    [
+     198.0,
+     216.0,
+     3.0
+    ],
+    [
+     354.0,
+     362.0,
+     2.0
+    ]
+   ],
+   "Violas": [
+    [
+     46.3,
+     77.3,
+     -3.0
+    ]
+   ]
+  }
+ },
+ "_notes": {
+  "fermata_end_ticks": "ends of the fermata bars m14, m16, m107, m129, m202 (MIDI ticks)",
+  "mix.automation": "instrument -> [start s, end s, dB] in the rendered timeline (from listener feedback, drafts 5-9)",
+  "mix.target": "perceived loudness of each instrument relative to the melody, after the hall"
+ }
+}
