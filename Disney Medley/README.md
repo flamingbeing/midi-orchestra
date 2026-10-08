@@ -17,7 +17,7 @@ Drafts 1–9 are 192 kbps MP3 and draft 10 onwards VBR V2 MP3, all named after t
 | File | Notes |
 | --- | --- |
 | `disney_medley_original_draft10.mp3` | Latest version, from the second listener's comments: steel-string acoustic guitar, louder harp glissandi, harp over strings at 1:38, staccato strums at 2:17, rolled harp chords at 3:05, piano semiquavers at 5:30 brought out. See `notes/changes_draft10.md`. |
-| `disney_medley_original_draft9.mp3` | Breathing for flute and clarinet, true slurs, re-tongued repeated notes and balance automation. Adds breathing for flute and clarinet, true slurs, re-tongued repeated notes and balance automation. |
+| `disney_medley_original_draft9.mp3` | Breathing for flute and clarinet, true slurs, re-tongued repeated notes and balance automation. |
 | `disney_medley_original_draft8.mp3` | Shorter string attacks, tempo-map fixes and no master compressor. |
 | `disney_medley_original_draft7b.mp3` | Goes back to the draft 6 engine and adds balance calibration after the hall reverb. |
 | `disney_medley_original_draft7.mp3` | The balance was much worse in this draft, which led to the draft 7b rule. |
