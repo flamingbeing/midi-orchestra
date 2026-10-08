@@ -47,4 +47,4 @@ Song start times differ slightly between drafts. Drafts 1 and 2 and the plain re
 | `make_input.sh` | Builds the render input from the original MIDI: `prepare.py` assigns the Sibelius tracks to sounds, then `tempo_plus5.py` and `tempo_fixes.py` apply the tempo edits. |
 | `listening_page.json` | Draft list and song start times for the listening-notes page. |
 
-**Final: draft 10** (git tag `disney-medley-final`). To rebuild it, run `pipeline/run.sh "Disney Medley" draft10_rebuild` from the repo root at that tag; `config/piece.json` holds every setting it used. The engine's regression check still rebuilds draft 9 (see `CLAUDE.md`). The code is in [`../pipeline`](../pipeline).
+**Final: draft 10** (commit `0e4cfe9`). To rebuild it, run `pipeline/run.sh "Disney Medley" draft10_rebuild` from the repo root at that commit; `config/piece.json` holds every setting it used. The engine's regression check still rebuilds draft 9 (see `CLAUDE.md`). The code is in [`../pipeline`](../pipeline).
