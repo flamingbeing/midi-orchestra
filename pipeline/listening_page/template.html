@@ -237,7 +237,7 @@ function loadDraft() {
 
 // ---------- download (MP3 hosted on GitHub) ----------
 const GH = "__GH__";
-function setDl() { const a = $("dlBtn"); a.href = GH + draft.src.split("/").pop(); a.title = "Download " + draft.label + " as MP3"; }
+function setDl() { const a = $("dlBtn"); a.href = GH + encodeURIComponent(draft.file || draft.src.split("/").pop()); a.title = "Download " + draft.label + " as MP3"; }
 setDl();
 $("dlCopy").addEventListener("click", async () => {
   const u = $("dlBtn").href;

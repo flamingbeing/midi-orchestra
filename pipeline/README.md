@@ -12,7 +12,7 @@ mkdir -p "My Piece/score" "My Piece/config" "My Piece/notes"
 cp ~/my_piece.mid "My Piece/score/"
 echo '{"title": "My Piece", "midi": "score/my_piece.mid"}' > "My Piece/config/piece.json"
 python3 pipeline/prepare.py "My Piece/score/my_piece.mid" /tmp/check.mid "My Piece/config/piece.json"   # check the instrument mapping
-pipeline/run.sh "My Piece" draft1                 # about 5 minutes on 4 CPUs -> My Piece/drafts/draft1.mp3
+pipeline/run.sh "My Piece" draft1                 # about 5 minutes on 4 CPUs -> My Piece/drafts/my_piece_draft1.mp3
 ```
 
 In a Claude Code session you can simply say: *"render `My Piece/score/x.mid` with the pipeline in this repo"*.
@@ -57,7 +57,7 @@ Without a `mix` block, a piece gets the default loudness targets and no time-bas
 | Pitched percussion | Timpani, Glockenspiel, Xylophone, Marimba, Vibraphone, Tubular Bells |
 | Drum kit and orchestral percussion (channel 10) | Each General MIDI drum note plays its own instrument: bass drum, snare, toms, hi-hat, crash/suspended cymbals, gong, tambourine, triangle, woodblock, claves, cowbell, bongos, congas, agogo, cabasa, shaker, guiro, vibraslap, sleigh bells, claps (`instruments.DRUMS`). Unlisted drum notes play on the snare. |
 
-To hear every sound, play [`demo/drafts/instrument_demo.mp3`](demo/drafts/instrument_demo.mp3); [`demo/timeline.txt`](demo/timeline.txt) lists when each instrument starts. Rebuild it with `pipeline/run.sh pipeline/demo instrument_demo`.
+To hear every sound, play [`demo/drafts/instrument_demo_draft1.mp3`](demo/drafts/instrument_demo_draft1.mp3); [`demo/timeline.txt`](demo/timeline.txt) lists when each instrument starts. Rebuild it with `pipeline/run.sh pipeline/demo draft1`.
 
 Every new sound was checked with a test score covering its full range: the pitch of each rendered note matched the MIDI. A few notes were flagged by the automatic octave check (timpani, tubular bells, vibraphone, organ, plus single notes on oboe, solo violin and violin tremolo), but all of them were confirmed correct on the spectrum. Pitch detectors misread drum and bell tones.
 

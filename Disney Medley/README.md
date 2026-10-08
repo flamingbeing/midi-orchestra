@@ -12,24 +12,24 @@ An orchestral rendering of a Sibelius arrangement that runs through ten songs: B
 
 ## Drafts (`drafts/`)
 
-All drafts are 192 kbps MP3. Every draft plays the original MIDI's notes, pitches and tempo map. The only things that change are articulation lengths and timing humanisation of 30 ms or less.
+All drafts are 192 kbps MP3, named after the MIDI file: `disney_medley_original_draft<N>.mp3`. Every draft plays the original MIDI's notes, pitches and tempo map. The only things that change are articulation lengths and timing humanisation of 30 ms or less.
 
 | File | Notes |
 | --- | --- |
-| `draft9.mp3` | Latest version. Adds breathing for flute and clarinet, true slurs, re-tongued repeated notes and balance automation. |
-| `draft8.mp3` | Shorter string attacks, tempo-map fixes and no master compressor. |
-| `draft7b.mp3` | Goes back to the draft 6 engine and adds balance calibration after the hall reverb. |
-| `draft7.mp3` | The balance was much worse in this draft, which led to the draft 7b rule. |
-| `draft6.mp3` | Fixes the clarinet squeak (wrong-octave samples). Louder cello around 2:20 and a softer, less thumpy harp. |
-| `draft5.mp3` | Faster clarinet attack with no distortion, more even note loudness and an audible celesta. |
-| `draft4.mp3` | New lossless sample sets: VSCO strings and clarinet, Sonatina celesta. |
-| `draft3b.mp3` | Draft 3 with the clarinet boosted. |
-| `draft3.mp3` | Louder clarinet, louder harp glissando at the end, softer guitar, and about 5% faster from Beauty and the Beast to Reflection. |
-| `draft2.mp3` | First balance pass: melody ducking, legato joins and phrase shaping. |
-| `draft1.mp3` | First rapid draft. |
-| `original.mp3` | The plain MIDI rendered without any of the realism processing. |
+| `disney_medley_original_draft9.mp3` | Latest version. Adds breathing for flute and clarinet, true slurs, re-tongued repeated notes and balance automation. |
+| `disney_medley_original_draft8.mp3` | Shorter string attacks, tempo-map fixes and no master compressor. |
+| `disney_medley_original_draft7b.mp3` | Goes back to the draft 6 engine and adds balance calibration after the hall reverb. |
+| `disney_medley_original_draft7.mp3` | The balance was much worse in this draft, which led to the draft 7b rule. |
+| `disney_medley_original_draft6.mp3` | Fixes the clarinet squeak (wrong-octave samples). Louder cello around 2:20 and a softer, less thumpy harp. |
+| `disney_medley_original_draft5.mp3` | Faster clarinet attack with no distortion, more even note loudness and an audible celesta. |
+| `disney_medley_original_draft4.mp3` | New lossless sample sets: VSCO strings and clarinet, Sonatina celesta. |
+| `disney_medley_original_draft3b.mp3` | Draft 3 with the clarinet boosted. |
+| `disney_medley_original_draft3.mp3` | Louder clarinet, louder harp glissando at the end, softer guitar, and about 5% faster from Beauty and the Beast to Reflection. |
+| `disney_medley_original_draft2.mp3` | First balance pass: melody ducking, legato joins and phrase shaping. |
+| `disney_medley_original_draft1.mp3` | First rapid draft. |
+| `disney_medley_original_plain.mp3` | The plain MIDI rendered without any of the realism processing. |
 
-Song start times differ slightly between drafts. Drafts 1 and 2 and `original.mp3` keep the score's own tempo. Drafts 3 and later play about 5% faster from Beauty and the Beast to Reflection.
+Song start times differ slightly between drafts. Drafts 1 and 2 and the plain render keep the score's own tempo. Drafts 3 and later play about 5% faster from Beauty and the Beast to Reflection.
 
 ## Notes (`notes/`)
 
