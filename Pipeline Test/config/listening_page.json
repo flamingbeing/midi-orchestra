@@ -1,0 +1,23 @@
+{
+ "title": "Pipeline Test",
+ "short_title": "Pipeline Test",
+ "storage_key": "pipeline-test",
+ "github_raw": "https://github.com/flamingbeing/midi-orchestra/raw/main/Pipeline%20Test/drafts/",
+ "drafts": [
+  {
+   "id": "draft1",
+   "label": "Draft 1",
+   "file": "pipeline_test_draft1.mp3",
+   "songs": [
+    [
+     0.0,
+     "Verse"
+    ],
+    [
+     4.8,
+     "Chorus"
+    ]
+   ]
+  }
+ ]
+}
