@@ -1,0 +1,39 @@
+   0.5s Piccolo
+   4.1s Flute
+   7.7s Alto Flute
+  11.3s Oboe
+  14.9s Cor Anglais
+  18.5s Clarinet
+  22.1s Bass Clarinet
+  25.7s Bassoon
+  29.3s Contrabassoon
+  32.9s Saxophone
+  36.5s Recorder
+  40.1s Horns
+  43.7s Trumpet
+  47.3s Trombone
+  50.9s Bass Trombone
+  54.5s Tuba
+  58.1s Solo Violin
+  61.7s Solo Viola
+  65.3s Solo Cello
+  68.9s Violins
+  72.5s Violas
+  76.1s Cellos
+  79.7s Contrabass
+  83.3s Violins Pizz
+  86.9s Contrabass Pizz
+  90.5s Violins Trem
+  94.1s Choir
+  97.7s Harpsichord
+ 101.3s Organ
+ 104.9s Piano
+ 108.5s Harp
+ 112.1s Celesta
+ 115.7s Glockenspiel
+ 119.3s Xylophone
+ 122.9s Marimba
+ 126.5s Vibraphone
+ 130.1s Tubular Bells
+ 133.7s Timpani
+ 137.3s drum kit, then percussion tour

@@ -35,7 +35,7 @@ In a Claude Code session you can simply say: *"render `My Piece/score/x.mid` wit
 | --- | --- |
 | `midi` | The MIDI file, as a path relative to the piece folder. |
 | `track_map` | `{"source track name": "sound"}`. This overrides `prepare.py`'s choice of sound. |
-| `extra_tracks` | Turns on the sounds outside the core set (`Contrabass`, `Oboe`, `Horns`, `Trumpet`, `Trombone`, `Timpani`). `prepare.py` prints the exact line to paste in. |
+| `extra_tracks` | Optional, rarely needed: `{"track name": [bank, pan, gain_dB, voices]}` for a custom track. Every sound listed below already renders without it. |
 | `fermata_end_ticks` | The MIDI ticks where fermata bars end. Release tails are lifted there. |
 | `mix.target` | Loudness of each instrument relative to the melody, in dB after the hall. |
 | `mix.automation` | `{"Instrument": [[start_s, end_s, dB], ...]}`. Passage-level balance fixes from listener feedback. |
@@ -43,13 +43,29 @@ In a Claude Code session you can simply say: *"render `My Piece/score/x.mid` wit
 
 Without a `mix` block, a piece gets the default loudness targets and no time-based automation. Add automation only in response to listener feedback.
 
-## Sounds and current limits
+## Sounds
 
-The best-sampled sounds are the string sections (arco and pizzicato), flute, clarinet, harp, piano, celesta, glockenspiel, nylon guitar and strings pad. Oboe, horns, trumpet, trombone, timpani and contrabass work too, but come from smaller sample sets, so expect less realism there until better free samples are added.
+`prepare.py` picks a sound for each MIDI track from its name (e.g. "Horn in F 1", "Violoncello", "English Horn") or its General MIDI program. The sounds are defined in `instruments.py` (catalogue) and `render.py` (the original core set).
 
-Other current limits:
-- Every General MIDI drum note plays as a snare.
-- Bassoon, tuba and choir have no dedicated sound and fall back to the nearest one, with a warning.
+| Family | Sounds |
+| --- | --- |
+| Woodwinds | Piccolo, Flute, Alto Flute, Oboe, Cor Anglais, Clarinet, Bass Clarinet, Bassoon, Contrabassoon, Saxophone, Recorder |
+| Brass | Horns, Trumpet, Trombone, Bass Trombone, Tuba |
+| Strings | Violins, Violas, Cellos, Contrabass (each also as Pizz and Trem), Solo Violin, Solo Viola, Solo Cello, Strings Pad |
+| Voices | Choir (male and female) |
+| Keyboards and plucked | Piano, Harpsichord, Organ, Celesta, Harp, Guitar |
+| Pitched percussion | Timpani, Glockenspiel, Xylophone, Marimba, Vibraphone, Tubular Bells |
+| Drum kit and orchestral percussion (channel 10) | Each General MIDI drum note plays its own instrument: bass drum, snare, toms, hi-hat, crash/suspended cymbals, gong, tambourine, triangle, woodblock, claves, cowbell, bongos, congas, agogo, cabasa, shaker, guiro, vibraslap, sleigh bells, claps (`instruments.DRUMS`). Unlisted drum notes play on the snare. |
+
+To hear every sound, play [`demo/drafts/instrument_demo.mp3`](demo/drafts/instrument_demo.mp3); [`demo/timeline.txt`](demo/timeline.txt) lists when each instrument starts. Rebuild it with `pipeline/run.sh pipeline/demo instrument_demo`.
+
+Every new sound was checked with a test score covering its full range: the pitch of each rendered note matched the MIDI. A few notes were flagged by the automatic octave check (timpani, tubular bells, vibraphone, organ, plus single notes on oboe, solo violin and violin tremolo), but all of them were confirmed correct on the spectrum. Pitch detectors misread drum and bell tones.
+
+Limits:
+- The core sounds (strings, flute, clarinet, harp, piano, celesta) have the most performance modelling: breath planning, slurs and phrase shaping tuned on the Disney Medley. The catalogue winds and brass get breath planning, slurs and phrasing too, but nobody has listened to them yet. Expect the first draft of a new piece to need listening feedback.
+- Saxophone uses tenor sax samples for all saxophones. Tremolo strings use section tremolo samples. Choir sings "aah" only.
+- Programs with no orchestral equivalent (synths, sound effects, electric instruments) fall back to the nearest sound, and `prepare.py` prints a warning for each.
+- To add an instrument, fetch its free samples, add an entry to `instruments.py`, and run `tools/import_samples.py` to copy the files into `assets/` as FLAC.
 
 Sample libraries and their licences are listed in [`assets/SOURCES.md`](assets/SOURCES.md).
 

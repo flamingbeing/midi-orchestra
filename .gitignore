@@ -2,4 +2,4 @@ __pycache__/
 *.pyc
 *.wav
 !pipeline/assets/**/*.wav
-*/drafts/*.m4a
+**/drafts/*.m4a

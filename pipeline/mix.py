@@ -85,6 +85,31 @@ for kv in filter(None, os.environ.get('V8_AMBSET', '').split(',')):      # e.g. 
 FAMILY = {'Flute': 'winds', 'Clarinet': 'winds', 'Harp': 'perc', 'Celesta': 'perc', 'Glockenspiel': 'perc',
           'Piano': 'piano', 'Guitar': 'piano', 'Snare Drum': 'perc'}
 DRY = 0.3
+# catalogue instruments (pipeline/instruments.py): family, loudness target, stage depth, seat from pan
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import instruments as INS
+_FAM = {'winds': 'winds', 'brass': 'winds', 'strings': 'strings', 'perc': 'perc', 'piano': 'piano', 'choir': 'strings'}
+_DEPTH = {'winds': 0.003, 'brass': 0.006, 'perc': 0.006, 'choir': 0.008}
+for _n, _e in list(INS.CATALOG.items()) + [('Percussion', INS.PERC)]:
+    FAMILY.setdefault(_n, _FAM[_e['family']])
+    TARGET.setdefault(_n, _e['target'])
+    if on('V8_AMB') and _e['family'] in _DEPTH:
+        BACK_DELAY.setdefault(_n, _DEPTH[_e['family']])
+
+
+def seat_for(n):
+    if n in SEATS:
+        return SEATS[n]
+    e = INS.CATALOG.get(n, INS.PERC if n == 'Percussion' else None)
+    if e is None:
+        return SEATS.get(n.replace(' Pizz', '')) or SEATS['Strings Pad']
+    if e.get('seat') in SEATS:
+        return SEATS[e['seat']]
+    az = int(np.clip(round(-e['pan'] * 90 / 15) * 15, -90, 90))          # stage azimuth from the pan position
+    tag = ('000' if az == 0 else f'{az:+d}') + 'deg_' + ('3m' if az % 30 == 0 else '4m')
+    ms = next((s['marco_direct_ms'] for s in SEATS.values() if s['marco_main'] == f'marco_tree/main_{tag}.wav'),
+              4.72 if az % 30 == 0 else 6.9)
+    return {'marco_main': f'marco_tree/main_{tag}.wav', 'marco_amb': f'marco_tree/amb_{tag}.wav', 'marco_direct_ms': ms}
 
 
 def peq(x, f0, gain_db, q=1.0):
@@ -175,7 +200,7 @@ cal = 1.0 / np.abs(ref_main[: int(0.02 * SR)]).max()
 
 def hall(n, y):
     """stem as heard from the tree: per-seat measured hall + delayed close spot."""
-    seat = SEATS.get(n) or SEATS.get(n.replace(' Pizz', '')) or SEATS['Strings Pad']
+    seat = seat_for(n)
     mono = y.mean(1); fam = FAMILY.get(n, 'strings')
     main = ir(seat['marco_main']) * cal; amb = ir(seat['marco_amb']) * cal
     out = np.zeros((L + 4 * SR, 2), np.float32)

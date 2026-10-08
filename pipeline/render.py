@@ -96,15 +96,20 @@ def tonejs_bank(name, sustain=True, release=0.3, gain=1.0, attack=0.004, trim=Fa
 
 import librosa
 NN = {'c': 0, 'd': 2, 'e': 4, 'f': 5, 'g': 7, 'a': 9, 'b': 11}
-def folder_bank(name, folder, regex, layer_vel, sustain, release, gain, attack, octave_offset=0, measure=True, trim_attack=0.0):
+def folder_bank(name, folder, regex, layer_vel, sustain, release, gain, attack, octave_offset=0, measure=True, trim_attack=0.0,
+                key_base=36):
     out = []
     for f in sorted(os.listdir(folder)):
         mm = re.search(regex, f, re.I)
         if not mm:
             continue
-        note, layer = mm.group('note'), mm.group('layer')
-        L = NN[note[0].lower()] + note.count('#') - (1 if len(note) > 1 and note[1] == 'b' and note[0].lower() != 'b' else 0)
-        nominal = 12 * (int(mm.group('oct')) + 1 + octave_offset) + L
+        gd = mm.groupdict(); layer = gd['layer']
+        if gd.get('key') is not None:                 # keyboard index (1 = key_base), e.g. organ pipes numbered by key
+            nominal = key_base + int(gd['key']) - 1
+        else:
+            note = gd['note']
+            L = NN[note[0].lower()] + note.count('#') - (1 if len(note) > 1 and note[1] == 'b' and note[0].lower() != 'b' else 0)
+            nominal = 12 * (int(gd['oct']) + 1 + octave_offset) + L
         x = decode(os.path.join(folder, f))
         on = np.argmax(np.abs(x).max(1) > np.abs(x).max() * 0.02)
         x = x[max(0, on - int(0.003 * SR)):]
@@ -187,6 +192,68 @@ BANKS['clarinet'] = folder_bank('clarinet', os.path.join(V, 'Woodwinds/Clarinet/
 CEL = os.path.join(G, 'sso_git/Sonatina Symphonic Orchestra/Samples/Celeste')
 BANKS['celesta'] = folder_bank('celesta', CEL, r'celeste-(?P<note>[a-g]#?)(?P<oct>\d)-(?P<layer>hard|soft)', {'soft': 0.6, 'hard': 1.0}, False, 0.5, 1.0, 0.002)
 BANKS['piano'].name = 'piano_damped'; BANKS['guitar'].name = 'guitar_damped'
+# catalogue instruments (pipeline/instruments.py): loaded the first time a track needs them
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import instruments as INS
+CAT = INS.CATALOG
+
+
+def catalog_bank(name):
+    e = CAT[name]
+    samples = []
+    for p in e['parts']:
+        b = folder_bank(name, os.path.join(G, p['folder']), p['regex'], INS.DYN, e['sustain'], e['release'], 1.0, e['attack'],
+                        trim_attack=e.get('trim', 0.0), key_base=p.get('key_base', 36), measure=p.get('measure', True))
+        prev = list(samples)        # a later part only fills pitches the earlier parts don't cover
+        samples += [s for s in b.samples if not prev or min(abs(s['midi'] - q['midi']) for q in prev) > 1.5]
+    bank = Bank('cat:' + name, samples, e['sustain'], e['release'], 1.0, e['attack'])
+    bank.damped = e.get('damped', False)
+    return bank
+
+
+_DRUMB = {}
+def drum_bank(note):
+    """one-shot samples for a GM drum note: list of dicts (audio at natural relative level, layer value)"""
+    if note not in _DRUMB:
+        folder, regex = INS.DRUMS[note]
+        d = os.path.join(G, folder)
+        out = []
+        for f in sorted(os.listdir(d)):
+            mm = re.search(regex, f, re.I)
+            if not mm:
+                continue
+            x = decode(os.path.join(d, f))
+            on = np.argmax(np.abs(x).max(1) > np.abs(x).max() * 0.02)
+            out.append(dict(audio=x[max(0, on - int(0.002 * SR)):], layer=(mm.groupdict().get('layer') or '').lower()))
+        names = sorted({s['layer'] for s in out}, key=lambda l: INS.DYN.get(l, int(re.sub(r'\D', '', l) or 0)))
+        vals = {l: (INS.DYN[l] if all(n in INS.DYN for n in names) else round(0.4 + 0.6 * i / max(1, len(names) - 1), 2))
+                if len(names) > 1 else 1.0 for i, l in enumerate(names)}
+        top = max(vals.values())
+        ref = np.median([np.sqrt(np.mean(s['audio'][: int(0.5 * SR)] ** 2)) + 1e-9 for s in out if vals[s['layer']] == top])
+        for s in out:
+            s['vel'] = vals[s['layer']]; s['audio'] = s['audio'] / ref * 0.1
+        _DRUMB[note] = out
+        print(f'  drum {note}: {len(out)} samples, layers {sorted(set(vals.values()))}', flush=True)
+    return _DRUMB[note]
+
+
+_DRR = {}
+def drum_hit(n):
+    smp = drum_bank(n.pitch)
+    v = n.velocity / 127
+    lays = sorted({s['vel'] for s in smp})
+    lay = next((l for l in lays if l >= v - 1e-9), lays[-1])
+    c = [s for s in smp if s['vel'] == lay]
+    _DRR[n.pitch] = _DRR.get(n.pitch, -1) + 1
+    y = c[_DRR[n.pitch] % len(c)]['audio'][: int(8 * SR)].copy()
+    kf = min(len(y) // 4, int(0.3 * SR))
+    if kf > 1:
+        y[-kf:] *= (np.cos(np.linspace(0, np.pi / 2, kf)) ** 2)[:, None]
+    y *= float(np.clip(v / lay, 0.3, 1.5)) ** 1.5
+    i0 = int(n.start * SR)
+    b = stem('Percussion'); y = y[: len(b) - i0]; b[i0:i0 + len(y)] += y
+
+
 # MIDI track name -> (bank, pan -1..1, mix gain dB, section voices)
 TRACKS_OLD = {
     'Violins': ('violins', -0.45, 0, 1), 'Violas': ('violas', 0.2, -2, 1), 'Cellos': ('cellos', 0.45, -1, 1),
@@ -271,7 +338,7 @@ def render(bank, midi, vel, start, dur, pan, gain_db, detune=0.0, delay=0.0, lay
     if bank.sustain:
         out_len = dur + rel * 1.3
     else:
-        out_len = min(len(s['audio']) / SR / rate, (dur + rel * 1.3) if bank.name in ('violinsPizz', 'celliPizz', 'piano_damped', 'guitar_damped') else 12)
+        out_len = min(len(s['audio']) / SR / rate, (dur + rel * 1.3) if (bank.name in ('violinsPizz', 'celliPizz', 'piano_damped', 'guitar_damped') or getattr(bank, 'damped', False)) else 12)
     n = int(out_len * SR)
     need_src = int(n * rate) + 2
     off = attack_end(s) if (slur_in and bank.sustain) else 0
@@ -291,7 +358,7 @@ def render(bank, midi, vel, start, dur, pan, gain_db, detune=0.0, delay=0.0, lay
         at = min(n, int((xf_in or XF) * SR)); env[:at] = np.sin(0.5 * np.pi * np.linspace(0, 1, at))
     else:
         at = min(n, int(att * SR)); env[:at] = np.linspace(0, 1, at)
-    if bank.sustain or bank.name in ('violinsPizz', 'celliPizz', 'piano_damped', 'guitar_damped'):
+    if bank.sustain or (bank.name in ('violinsPizz', 'celliPizz', 'piano_damped', 'guitar_damped') or getattr(bank, 'damped', False)):
         r0 = int(dur * SR)
         if r0 < n:
             tt = np.arange(n - r0) / SR
@@ -341,6 +408,8 @@ BEATS = src.get_beats(); DOWNS = src.get_downbeats()
 BREATHS = []
 CAPTOL = 1.05        # a 4-bar phrase that overshoots the air capacity by < 5 % is still taken in one breath
 CAP = {'Flute': float(os.environ.get('V9_CAPF', '7.0')), 'Clarinet': float(os.environ.get('V9_CAPC', '11.0'))}
+CAP.update({k: e['cap'] for k, e in CAT.items() if 'cap' in e})        # catalogue winds and brass breathe too
+WINDS = set(CAP)
 
 
 def plan_breaths(notes, name, forced=None):
@@ -456,6 +525,8 @@ for inst in src.instruments:
     if ONLY and inst.name not in ONLY and not (inst.is_drum and 'Snare Drum' in ONLY): continue
     if inst.is_drum:
         for n in inst.notes:
+            if n.pitch in INS.DRUMS:
+                drum_hit(n); continue
             s = BANKS['snare'].samples[count % len(BANKS['snare'].samples)]
             y = s['audio'][: int(2 * SR)] * (n.velocity / 127) ** 2 * 0.5
             i0 = int(n.start * SR)
@@ -468,13 +539,19 @@ for inst in src.instruments:
             i0 = int(n.start * SR)
             mix[i0:i0 + len(y)] += np.stack([y * 0.75, y * 0.75], axis=1); count += 1
         continue
+    if inst.name not in TRACKS and inst.name in CAT:
+        if 'cat:' + inst.name not in BANKS:
+            BANKS['cat:' + inst.name] = catalog_bank(inst.name)
+        TRACKS[inst.name] = ('cat:' + inst.name, CAT[inst.name]['pan'], 0, 1)
+    elif inst.name not in TRACKS and inst.name in TRACKS_OLD:
+        TRACKS[inst.name] = TRACKS_OLD[inst.name]
     if inst.name not in TRACKS:
         print('skip', inst.name); continue
     bname, pan, gdb, voices = TRACKS[inst.name]
     CUR[0] = inst.name
     notes = sorted(inst.notes, key=lambda n: n.start)
     # phrasing for melodic lines: legato joins + phrase arch (velocity offsets)
-    if inst.name in ('Flute', 'Clarinet', 'Violins'):
+    if inst.name in ('Flute', 'Clarinet', 'Violins') or CAT.get(inst.name, {}).get('melodic'):
         mono = inst.name != 'Violins'
         phr = [[]]
         for a, b in zip(notes, notes[1:] + [None]):
@@ -505,7 +582,8 @@ for inst in src.instruments:
             for n, a in zip(ph, sm):
                 n.velocity = int(np.clip(0.35 * n.velocity + 0.65 * a, 1, 127))
                 n.layer_vel = pl
-    if E9('V9_FERMATA') and inst.name in ('Violins', 'Violas', 'Cellos', 'Flute', 'Clarinet', 'Strings Pad'):
+    if E9('V9_FERMATA') and (inst.name in ('Violins', 'Violas', 'Cellos', 'Flute', 'Clarinet', 'Strings Pad') or
+                             CAT.get(inst.name, {}).get('sustain')):
         # fermata release: the orchestra lifts before the next section (note end only; onsets/tempo unchanged)
         for n in notes:
             te = src.time_to_tick(n.end)
@@ -513,12 +591,12 @@ for inst in src.instruments:
                 tt_ = src.tick_to_time(t)
                 if abs(n.end - tt_) < 0.06 or abs(te - t) <= 10:
                     n.end = tt_ - (0.15 if tt_ - n.start >= 0.6 else 0.10)
-                    n.fermata = True; n.breath = inst.name in ('Flute', 'Clarinet')
+                    n.fermata = True; n.breath = inst.name in WINDS
                     print(f'  fermata lift {inst.name} at {tt_:.2f}s', flush=True)
                     break
-    if inst.name in ('Flute', 'Clarinet'):
+    if inst.name in WINDS:
         if E9('V9_BREATH'):
-            plan_breaths(notes, inst.name, None if FIN is None else FIN[inst.name])
+            plan_breaths(notes, inst.name, None if FIN is None else FIN.get(inst.name))
         if E9('V9_RETONGUE'):
             # repeated same-pitch notes: re-tongued (short stop), not two overlapping copies of the sample
             for a, b in zip(notes, notes[1:]):
@@ -542,7 +620,7 @@ for inst in src.instruments:
         for a, b in zip(notes, notes[1:]):
             if 0 <= b.start - a.end < 0.01 and b.start - a.start > 0.15:
                 a.end = b.start + 0.05
-    if inst.name in ('Piano', 'Harp', 'Guitar', 'Celesta') and E9('V9_DEDUP'):
+    if (inst.name in ('Piano', 'Harp', 'Guitar', 'Celesta') or (inst.name in CAT and not CAT[inst.name]['sustain'])) and E9('V9_DEDUP'):
         # one key / string cannot be struck twice at the same instant: merge same-pitch notes within 5 ms
         keep = []
         for n in notes:
@@ -594,7 +672,7 @@ for inst in src.instruments:
     # slow-attack instruments speak late: start them a little early so the perceived onset sits on the beat
     SC = float(os.environ.get('V8_STRCOMP', '0.010')) if STRTRIM else 0.025
     COMP = {'violins': SC, 'violas': SC, 'cellos': SC + CELLOX, 'contrabass': 0.025, 'pad': SC if STRTRIM else 0.03,
-            'flute': 0.012, 'clarinet': 0.012}.get(bname, 0.0)
+            'flute': 0.012, 'clarinet': 0.012}.get(bname, CAT.get(inst.name, {}).get('comp', 0.0))
     for k, n in enumerate(notes):
         if bname == 'pizz':
             bank = {'Violins Pizz': BANKS['violinsPizz'], 'Violas Pizz': BANKS['violasPizz'], 'Cellos Pizz': BANKS['celliPizz']}[inst.name]
@@ -631,7 +709,7 @@ pass  # dynamics come from the original velocities
 os.makedirs(out_path, exist_ok=True)
 for name, b in stems.items():
     sf.write(os.path.join(out_path, name + '.wav'), b, SR, subtype='FLOAT')
-json.dump({k: v[1] for k, v in TRACKS.items()} | {'Snare Drum': 0.0}, open(os.path.join(out_path, 'pans.json'), 'w'))
+json.dump({k: v[1] for k, v in TRACKS.items()} | {'Snare Drum': 0.0, 'Percussion': INS.PERC['pan']}, open(os.path.join(out_path, 'pans.json'), 'w'))
 # onset compensation actually used (per track; on-grid flute notes use 0.035) for verify.py
 _SC = float(os.environ.get('V8_STRCOMP', '0.010')) if STRTRIM else 0.025
 _CT = {'violins': _SC, 'violas': _SC, 'cellos': _SC + CELLOX, 'contrabass': 0.025, 'pad': _SC if STRTRIM else 0.03, 'flute': 0.012, 'clarinet': 0.012}
