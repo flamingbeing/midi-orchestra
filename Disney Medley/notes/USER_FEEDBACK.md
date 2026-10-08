@@ -62,3 +62,14 @@ On draft 8: "generally good, better than the previous versions". Keep iterating 
 Idea from the user: imitate professional musicians, e.g. how long each breath can be held (wind phrase lengths / breath points),
 BUT the original MIDI must be followed (notes, pitches, tempo map; only articulation lengths / humanization <= 30 ms).
 Draft 9 is NOT final. Budget for draft 9: 3 hours from this note. Export stays AAC m4a 256k.
+
+On draft 9 (second listener, "panda", via the listening page; times are draft 9 times):
+- General: harp glissandos are a bit too soft
+- General [Guitar]: the guitar could be more of an acoustic guitar sound throughout
+- 1:37.8-1:42.8 (Just Around the Riverbend): the strings are overwhelming the harp
+- 2:17.5-2:22.5 (Just Around the Riverbend): the guitar strumming should also be staccato
+- 2:27.9-2:32.9 (I Won't Say): LIKED - the flute is very nice (keep)
+- 3:05.4-3:10.4 (One Jump Ahead): the harp should roll the chords in the right hand here
+- 3:38.3-3:43.3 (Beauty and the Beast): LIKED - the additional trill on the flute countermelody is very nice (keep)
+- 5:29.4-5:34.4 (Reflection): the piano is a bit too soft here; the semiquavers should be heard
+- 6:32.5-6:37.5 (A Whole New World): the harp glissando here is missing

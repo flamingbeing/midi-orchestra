@@ -273,6 +273,14 @@ TRACKS = {
 }
 # piece config (env PIECE=path/to/piece.json): extra MIDI track names -> (bank, pan, gain dB, voices), fermatas
 PIECE = json.load(open(os.environ['PIECE'])) if os.environ.get('PIECE') else {}
+# "banks": {"Guitar": "guitar_acoustic"} plays a track on another sample set (OPTIONAL_BANKS below)
+OPTIONAL_BANKS = {'guitar_acoustic': lambda: tonejs_bank('guitar-acoustic', sustain=False, release=0.3, gain=0.9, attack=0.002)}
+for k, v in PIECE.get('banks', {}).items():
+    if v not in BANKS:
+        BANKS[v] = OPTIONAL_BANKS[v]()
+        if v.startswith('guitar'):
+            BANKS[v].name = 'guitar_damped'            # stops at note-off like the nylon guitar
+    TRACKS[k] = (v,) + tuple(TRACKS[k][1:])
 for k, v in PIECE.get('extra_tracks', {}).items():
     TRACKS[k] = tuple(v) if isinstance(v, list) else TRACKS_OLD[v]
 src = pm.PrettyMIDI(midi_path)
@@ -669,6 +677,36 @@ for inst in src.instruments:
                 run += [a, b]
         for n in set(run):
             n.velocity = int(min(127, n.velocity * 1.4))
+        if E9('V10_GLISS'):
+            # every other glissando (>= 6 stepwise notes < 90 ms apart) was too soft as well (listener, draft 9): a
+            # glissando is swept with a firm hand, and its very short notes otherwise vanish into the hall
+            boost = float(os.environ.get('V10_GLISSX', '1.3')); done = set(run); cur = [notes[0]]
+            for a, b in zip(notes, notes[1:] + [None]):
+                if b is not None and 0.01 < b.start - a.start < 0.09 and 0 < abs(b.pitch - a.pitch) <= 4:
+                    cur.append(b); continue
+                if len(cur) >= 6:
+                    for n in cur:
+                        if n not in done:
+                            n.velocity = int(min(127, n.velocity * boost)); done.add(n)
+                    print(f'  harp glissando {cur[0].start:.2f}-{cur[-1].start:.2f}s: {len(cur)} notes x{boost}', flush=True)
+                cur = [b] if b is not None else []
+    # piece config, listener requests for single passages ([start_s, end_s, ...] in the rendered timeline):
+    #   "articulation": {"Guitar": [[137.0, 143.6, 0.5]]}   note lengths x0.5 (staccato), never below 60 ms
+    #   "roll": {"Harp": [[184.9, 191.0, 60, 0.03]]}        chords with notes >= MIDI 60 rolled upward, 30 ms per note
+    for a0, a1, f in PIECE.get('articulation', {}).get(inst.name, []):
+        for n in notes:
+            if a0 <= n.start < a1:
+                n.end = n.start + max(0.06, (n.end - n.start) * f)
+    for a0, a1, lo, step in PIECE.get('roll', {}).get(inst.name, []):
+        ch = {}
+        for n in notes:
+            if a0 <= n.start < a1 and n.pitch >= lo:
+                ch.setdefault(round(n.start, 2), []).append(n)
+        for c in ch.values():
+            if len(c) >= 2:
+                for k, n in enumerate(sorted(c, key=lambda n: n.pitch)):
+                    n.start += k * step
+                print(f'  rolled {inst.name} chord at {c[0].start:.2f}s ({len(c)} notes)', flush=True)
     # slow-attack instruments speak late: start them a little early so the perceived onset sits on the beat
     SC = float(os.environ.get('V8_STRCOMP', '0.010')) if STRTRIM else 0.025
     COMP = {'violins': SC, 'violas': SC, 'cellos': SC + CELLOX, 'contrabass': 0.025, 'pad': SC if STRTRIM else 0.03,

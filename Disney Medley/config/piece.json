@@ -94,6 +94,37 @@
      46.3,
      77.3,
      -3.0
+    ],
+    [
+     96.5,
+     104.5,
+     -2.0
+    ]
+   ],
+   "Harp": [
+    [
+     96.5,
+     104.5,
+     3.0
+    ],
+    [
+     390.8,
+     394.8,
+     4.0
+    ]
+   ],
+   "Violins": [
+    [
+     96.5,
+     104.5,
+     -2.0
+    ]
+   ],
+   "Piano": [
+    [
+     327.8,
+     336.6,
+     5.0
     ]
    ]
   }
@@ -101,6 +132,32 @@
  "_notes": {
   "fermata_end_ticks": "ends of the fermata bars m14, m16, m107, m129, m202 (MIDI ticks)",
   "mix.automation": "instrument -> [start s, end s, dB] in the rendered timeline (from listener feedback, drafts 5-9)",
-  "mix.target": "perceived loudness of each instrument relative to the melody, after the hall"
+  "mix.target": "perceived loudness of each instrument relative to the melody, after the hall",
+  "banks": "draft 10: steel-string acoustic guitar (listener: \"more of the acoustic guitar sound\")",
+  "articulation": "draft 10: guitar strumming 2:17-2:23 staccato (listener request)",
+  "roll": "draft 10: harp right-hand chords rolled 3:05-3:11 (listener request; up to 90 ms onset spread inside a rolled chord)",
+  "mix.automation (draft 10)": "harp up / violins+violas down 1:37-1:44; piano +5 dB 5:29-5:36; harp +4 dB at the 6:32 glissando"
+ },
+ "banks": {
+  "Guitar": "guitar_acoustic"
+ },
+ "articulation": {
+  "Guitar": [
+   [
+    137.0,
+    143.6,
+    0.5
+   ]
+  ]
+ },
+ "roll": {
+  "Harp": [
+   [
+    184.9,
+    191.0,
+    60,
+    0.03
+   ]
+  ]
  }
 }
