@@ -110,7 +110,7 @@
     [
      390.8,
      394.8,
-     4.0
+     7.0
     ]
    ],
    "Violins": [
@@ -124,7 +124,7 @@
     [
      327.8,
      336.6,
-     5.0
+     10.0
     ]
    ]
   }
@@ -136,7 +136,7 @@
   "banks": "draft 10: steel-string acoustic guitar (listener: \"more of the acoustic guitar sound\")",
   "articulation": "draft 10: guitar strumming 2:17-2:23 staccato (listener request)",
   "roll": "draft 10: harp right-hand chords rolled 3:05-3:11 (listener request; up to 90 ms onset spread inside a rolled chord)",
-  "mix.automation (draft 10)": "harp up / violins+violas down 1:37-1:44; piano +5 dB 5:29-5:36; harp +4 dB at the 6:32 glissando"
+  "mix.automation (draft 10)": "harp +3 / violins+violas -2 dB 1:37-1:44; piano +10 dB 5:29-5:36 (it sits ~21 dB under the ff clarinet melody there); harp +7 dB at the 6:32 glissando"
  },
  "banks": {
   "Guitar": "guitar_acoustic"

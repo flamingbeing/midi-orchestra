@@ -5,6 +5,53 @@
  "github_raw": "https://github.com/flamingbeing/midi-orchestra/raw/main/Disney%20Medley/drafts/",
  "drafts": [
   {
+   "id": "draft10",
+   "label": "Draft 10",
+   "file": "disney_medley_original_draft10.mp3",
+   "songs": [
+    [
+     0.0,
+     "Belle"
+    ],
+    [
+     46.3,
+     "I'll Make a Man Out of You"
+    ],
+    [
+     96.3,
+     "Just Around the Riverbend"
+    ],
+    [
+     139.3,
+     "I Won't Say (I'm in Love)"
+    ],
+    [
+     175.3,
+     "One Jump Ahead"
+    ],
+    [
+     200.7,
+     "Beauty and the Beast"
+    ],
+    [
+     260.0,
+     "Go the Distance"
+    ],
+    [
+     304.7,
+     "Reflection"
+    ],
+    [
+     333.3,
+     "Out There"
+    ],
+    [
+     352.0,
+     "A Whole New World"
+    ]
+   ]
+  },
+  {
    "id": "draft9",
    "label": "Draft 9",
    "songs": [
