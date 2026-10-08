@@ -32,6 +32,10 @@ Drafts 1–9 are 192 kbps MP3 and draft 10 onwards VBR V2 MP3, all named after t
 
 Song start times differ slightly between drafts. Drafts 1 and 2 and the plain render keep the score's own tempo. Drafts 3 and later play about 5% faster from Beauty and the Beast to Reflection.
 
+## Final master (`final/`)
+
+`disney_medley_original_final.flac` is the lossless master of the final version (draft 10), at 24-bit / 44.1 kHz stereo and 74 MB. It is the same render as the draft 10 MP3. Use it for CDs, video or archiving: any player that handles FLAC can open it, and audio editors can convert it to WAV.
+
 ## Notes (`notes/`)
 
 - `USER_FEEDBACK.md` lists all listener feedback so far. It is the source of truth.
