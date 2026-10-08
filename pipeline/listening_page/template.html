@@ -231,9 +231,9 @@ for (const d of DRAFTS) { const o = document.createElement("option"); o.value = 
 $("draftSel").value = draft.id;
 $("draftSel").addEventListener("change", () => { draft = DRAFTS.find((d) => d.id === $("draftSel").value); loadDraft(); });
 function loadDraft() {
-  const wasPlaying = !audio.paused, at = audio.currentTime || 0;
+  const wasPlaying = !audio.paused, at = nowT();
   SONGS = draft.songs; buildSongs(); sel = null; showSel(); loop = false; $("loopSel").setAttribute("aria-pressed", "false");
-  audio.src = draft.src; if (at) { audio.currentTime = Math.min(at, draft.dur - 0.1); } if (wasPlaying) playIt(); $("dur").textContent = fmtShort(draft.dur); box.setAttribute("aria-valuemax", draft.dur.toFixed(0)); draw(); render(); setDl(); }
+  audio.src = blobs[draft.id] || draft.src; pending = null; if (at) seek(Math.min(at, draft.dur - 0.1)); if (wasPlaying) playIt(); $("dur").textContent = fmtShort(draft.dur); box.setAttribute("aria-valuemax", draft.dur.toFixed(0)); draw(); render(); setDl(); }
 
 // ---------- download (MP3 hosted on GitHub) ----------
 const GH = "__GH__";
@@ -261,13 +261,52 @@ $("play").addEventListener("click", () => (audio.paused ? playIt() : audio.pause
 audio.addEventListener("play", () => { $("playIcon").setAttribute("d", "M6 4.5h4v15H6zM14 4.5h4v15h-4z"); $("play").setAttribute("aria-label", "Pause"); tick(); });
 audio.addEventListener("pause", () => { $("playIcon").setAttribute("d", "M7 4.5v15l13-7.5z"); $("play").setAttribute("aria-label", "Play"); });
 audio.addEventListener("loadedmetadata", () => { if (isFinite(audio.duration)) { draft.dur = audio.duration; $("dur").textContent = fmtShort(audio.duration); draw(); } });
-function seek(t) { audio.currentTime = clamp(t, 0, draft.dur - 0.05); update(); }
+// Phones (Android Chrome with data saver, iOS) often don't load the audio until playback, and a currentTime set
+// before the metadata has loaded is ignored. Keep the requested position, start loading, apply it when ready.
+let pending = null;
+const nowT = () => (pending !== null ? pending : (audio.currentTime || 0));   // playhead, incl. a queued seek
+// Some hosts serve the MP3 without HTTP range support; then a phone can only seek inside what it has already
+// downloaded. Fallback: fetch the whole file once into a blob URL, which is always seekable.
+const blobs = {};
+let blobLoading = null;
+function canSeek(t) {
+  const s = audio.seekable;
+  for (let i = 0; i < s.length; i++) if (t >= s.start(i) && t <= s.end(i) + 0.05) return true;
+  return false;
+}
+function useBlob() {
+  if (blobs[draft.id]) { if (audio.src !== blobs[draft.id]) swapSrc(blobs[draft.id]); return; }
+  if (blobLoading === draft.id) return;
+  const d = draft; blobLoading = d.id; $("dlStatus").textContent = "Loading the recording so you can jump around…";
+  fetch(d.src).then((r) => { if (!r.ok) throw 0; return r.blob(); }).then((b) => {
+    blobs[d.id] = URL.createObjectURL(b); blobLoading = null; $("dlStatus").textContent = "";
+    if (draft.id === d.id) swapSrc(blobs[d.id]);
+  }).catch(() => { blobLoading = null; $("dlStatus").textContent = "Couldn't load the whole recording; jumping may not work here"; });
+}
+function swapSrc(u) {
+  const wasPlaying = !audio.paused; if (pending === null) pending = audio.currentTime || 0;
+  audio.src = u; audio.load(); if (wasPlaying) playIt();
+}
+function seek(t) {
+  t = clamp(t, 0, draft.dur - 0.05);
+  if (audio.readyState >= 1 && canSeek(t)) { pending = null; audio.currentTime = t; }
+  else {
+    pending = t;
+    if (audio.readyState >= 1 || audio.networkState === 3) useBlob();      // loaded but not seekable here: whole file
+    else if (audio.networkState !== 2) audio.load();                        // not loaded yet (data saver): load first
+  }
+  update();
+}
+audio.addEventListener("loadedmetadata", () => {
+  if (pending === null) return;
+  if (canSeek(pending)) { audio.currentTime = pending; pending = null; update(); } else useBlob();
+});
 function tick() {
   if (loop && sel && audio.currentTime >= sel.b) audio.currentTime = sel.a;
   update(); if (!audio.paused) requestAnimationFrame(tick);
 }
 function update() {
-  const t = audio.currentTime || 0;
+  const t = nowT();
   $("cur").textContent = fmt(t); $("songNow").textContent = songAt(t); box.setAttribute("aria-valuenow", t.toFixed(0));
   document.querySelectorAll("#songs button").forEach((b, i) => {
     const st = SONGS[i][0], en = i + 1 < SONGS.length ? SONGS[i + 1][0] : 1e9; b.classList.toggle("on", t >= st && t < en);
@@ -276,7 +315,7 @@ function update() {
 }
 document.addEventListener("keydown", (e) => {
   if (e.code === "Space" && !/TEXTAREA|INPUT|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); audio.paused ? playIt() : audio.pause(); }
-  if (document.activeElement === box && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { seek(audio.currentTime + (e.key === "ArrowLeft" ? -5 : 5)); }
+  if (document.activeElement === box && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { seek(nowT() + (e.key === "ArrowLeft" ? -5 : 5)); }
 });
 
 // ---------- waveform ----------
@@ -298,7 +337,7 @@ function draw() {
   // selection
   if (sel) { g.fillStyle = css("--mark-soft"); g.fillRect(X(sel.a), top, X(sel.b) - X(sel.a), H); g.fillStyle = css("--mark"); g.fillRect(X(sel.a), top, 2, H); g.fillRect(X(sel.b) - 2, top, 2, H); }
   // waveform bars
-  const P = draft.peaks, mid = top + H / 2, cur = audio.currentTime || 0, bw = w / P.length;
+  const P = draft.peaks, mid = top + H / 2, cur = nowT(), bw = w / P.length;
   for (let i = 0; i < P.length; i++) {
     const x = i * bw, a = Math.max(1, (P[i] / 100) * (H / 2 - 2));
     g.fillStyle = (i + 0.5) / P.length * draft.dur <= cur ? css("--wave-played") : css("--wave");
@@ -312,9 +351,9 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
 
 let drag = null;
 const tAt = (e) => { const r = box.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * draft.dur; };
-box.addEventListener("pointerdown", (e) => { box.setPointerCapture(e.pointerId); drag = { t0: tAt(e), x0: e.clientX, moved: false }; });
+box.addEventListener("pointerdown", (e) => { box.setPointerCapture(e.pointerId); drag = { t0: tAt(e), x0: e.clientX, moved: false, slop: e.pointerType === "mouse" ? 4 : 12 }; });
 box.addEventListener("pointermove", (e) => {
-  if (!drag) return; if (Math.abs(e.clientX - drag.x0) > 4) drag.moved = true;
+  if (!drag) return; if (Math.abs(e.clientX - drag.x0) > drag.slop) drag.moved = true;
   if (drag.moved) { const t = tAt(e); sel = { a: Math.min(drag.t0, t), b: Math.max(drag.t0, t) }; showSel(); draw(); }
 });
 box.addEventListener("pointerup", (e) => {
@@ -322,6 +361,7 @@ box.addEventListener("pointerup", (e) => {
   if (!drag.moved) seek(drag.t0); else { setMode("part"); seek(sel.a); }
   drag = null;
 });
+box.addEventListener("pointercancel", () => { drag = null; });
 
 // ---------- selection ----------
 function showSel() {
@@ -336,7 +376,7 @@ document.querySelectorAll(".nudge").forEach((b) => b.addEventListener("click", (
 }));
 $("playSel").addEventListener("click", () => { if (sel) { seek(sel.a); playIt(); } });
 $("loopSel").addEventListener("click", () => { loop = !loop; $("loopSel").setAttribute("aria-pressed", String(loop)); if (loop && sel) { seek(sel.a); playIt(); } });
-$("markNow").addEventListener("click", () => { const t = audio.currentTime || 0; sel = { a: clamp(t - 3, 0, draft.dur), b: clamp(t + 2, 0, draft.dur) }; setMode("part"); showSel(); draw(); });
+$("markNow").addEventListener("click", () => { const t = nowT(); sel = { a: clamp(t - 3, 0, draft.dur), b: clamp(t + 2, 0, draft.dur) }; setMode("part"); showSel(); draw(); });
 
 // ---------- form ----------
 function chips(host, list, set) {
