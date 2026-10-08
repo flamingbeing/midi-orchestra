@@ -14,7 +14,9 @@ This repo turns MIDI scores into realistic orchestral recordings. There is one f
 
 ## Improving a piece (the usual session)
 
-1. The listener's comments arrive as text: copied from the listening page, or pasted by the user. Add them to `<Piece>/notes/USER_FEEDBACK.md`.
+1. Collect the listener's comments and add them to `<Piece>/notes/USER_FEEDBACK.md`. They arrive in two ways:
+   - **From the listening site** (https://flamingbeing.github.io/midi-orchestra/): devices connected to GitHub save each comment as `<Piece>/notes/comments/<draft>_<time>.json`. Fields include `draft`, `kind` (`part` or `global`), `start`/`end` in seconds of that draft, `song`, `what`, `who`, `text` and `by`. Pull `main` first. Once a comment is reflected in USER_FEEDBACK.md, move it to `notes/comments/processed/` so it isn't handled twice.
+   - **As text** pasted by the user, for example copied from the page.
 2. Decide where each fix belongs.
    - **Only this piece** (a passage too loud, a part to bring out, a tempo the listener wants): put it in `<Piece>/config/piece.json` (`mix.target`, `mix.automation`, `fermata_end_ticks`, `track_map`) or in `<Piece>/config/`.
    - **How an instrument or technique sounds everywhere** (a sample problem, attacks, breathing, the hall): change `pipeline/*.py`. That improves every piece's future drafts.

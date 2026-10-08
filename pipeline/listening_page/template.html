@@ -123,17 +123,6 @@ textarea { min-height: 96px; resize: vertical; }
     <span id="saveMode" class="badge">Saved on this device</span>
   </header>
 
-  <section class="handoff" id="handoff" hidden aria-labelledby="handoffTitle">
-    <h2 id="handoffTitle">Your comments stay on this device</h2>
-    <p>Nothing you write is sent anywhere automatically. When you're done (or whenever you like), tap <strong>Copy my comments</strong> and paste them into a message to the person who shared this page. Your comments are kept in this browser, so you can close the page and carry on later.</p>
-    <div class="handoff-row">
-      <button class="primary" id="copyMine">Copy my comments</button>
-      <button class="ghost" id="showText" aria-expanded="false">Show as text</button>
-      <span class="status" id="handoffStatus" role="status"></span>
-    </div>
-    <textarea id="exportText" readonly hidden aria-label="Your comments as text"></textarea>
-  </section>
-
   <section class="score" aria-label="Recording">
     <div class="transport">
       <button id="play" class="play" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg></button>
@@ -147,7 +136,6 @@ textarea { min-height: 96px; resize: vertical; }
     <div class="wave-box" id="waveBox" role="slider" aria-label="Waveform: click to jump, drag to select a passage" tabindex="0" aria-valuemin="0" aria-valuenow="0">
       <canvas id="wave"></canvas>
     </div>
-    <p class="hint">Click to jump. Drag to select a passage. Blue bands are passages someone already commented on. Space bar plays and pauses.</p>
     <div class="songs" id="songs" aria-label="Jump to a song"></div>
     <audio id="audio" preload="metadata"></audio>
   </section>
@@ -175,6 +163,8 @@ textarea { min-height: 96px; resize: vertical; }
         </div>
       </div>
 
+      <label for="text" class="lbl" style="font:700 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">In your own words</label>
+      <textarea id="text" placeholder="e.g. The clarinet here sounds thin and too quiet next to the strings."></textarea>
       <fieldset id="whatSet">
         <legend>What's wrong (pick any)</legend>
         <div class="chips" id="whatChips"></div>
@@ -183,8 +173,6 @@ textarea { min-height: 96px; resize: vertical; }
         <legend>Which instrument</legend>
         <div class="chips" id="whoChips"></div>
       </fieldset>
-      <label for="text" class="lbl" style="font:700 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">In your own words</label>
-      <textarea id="text" placeholder="e.g. The clarinet here sounds thin and too quiet next to the strings."></textarea>
       <label for="who" style="font:700 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Your name (optional)</label>
       <input type="text" id="who" placeholder="So we know who said it">
       <button class="primary" id="save">Save comment</button>
@@ -204,6 +192,28 @@ textarea { min-height: 96px; resize: vertical; }
       <div class="notes" id="notes"></div>
     </section>
   </div>
+
+  <section class="handoff" id="handoff" hidden aria-labelledby="handoffTitle">
+    <h2 id="handoffTitle">Your comments stay on this device</h2>
+    <p id="ghOn" hidden>This device is connected to GitHub: every comment you save is stored in the project straight away,
+      and comments from other devices appear here too. <span id="ghSync" class="status"></span></p>
+    <p id="ghOff">Nothing you write is sent anywhere automatically. When you're done (or whenever you like), tap <strong>Copy my comments</strong> and paste them into a message to the person who shared this page. Your comments are kept in this browser, so you can close the page and carry on later.</p>
+    <div class="handoff-row">
+      <button class="primary" id="copyMine">Copy my comments</button>
+      <button class="ghost" id="showText" aria-expanded="false">Show as text</button>
+      <span class="status" id="handoffStatus" role="status"></span>
+    </div>
+    <textarea id="exportText" readonly hidden aria-label="Your comments as text"></textarea>
+    <details id="ghBox" hidden>
+      <summary>Connect this device to GitHub</summary>
+      <p>Paste the access key you were given (or open the connect link you were sent). It is kept only in this browser.</p>
+      <div class="handoff-row">
+        <input type="password" id="ghKey" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:200px">
+        <button class="primary" id="ghSave">Connect</button>
+        <button class="ghost" id="ghForget" hidden>Disconnect</button>
+      </div>
+    </details>
+  </section>
 </div>
 
 <script>
@@ -395,25 +405,26 @@ function setMode(m) {
 $("tabPart").addEventListener("click", () => setMode("part"));
 $("tabGlobal").addEventListener("click", () => setMode("global"));
 $("text").addEventListener("input", validate);
-try { $("who").value = localStorage.getItem("__KEY__-who") || ""; } catch (e) {}
 function validate() {
   const hasContent = $("text").value.trim() || picked.what.size || picked.who.size;
   $("save").disabled = !hasContent || (mode === "part" && !sel);
   $("save").textContent = mode === "part" ? "Save comment on this passage" : "Save general comment";
 }
 function setStatus(s) { $("status").textContent = s; }
+try { $("who").value = localStorage.getItem("__KEY__-who") || ""; } catch (e) {}
 $("save").addEventListener("click", async () => {
   const note = {
     kind: mode, start: mode === "part" ? +sel.a.toFixed(2) : null, end: mode === "part" ? +sel.b.toFixed(2) : null,
     song: mode === "part" ? songAt(sel.a) : null, what: [...picked.what], who: [...picked.who], text: $("text").value.trim(),
     by: $("who").value.trim().slice(0, 60), author: myId, draft: draft.id, created: Date.now(), done: false,
   };
-  try { localStorage.setItem("__KEY__-who", note.by); } catch (e) {}
   $("save").disabled = true; setStatus("Saving…");
   try {
     if (db) await db.collection("comments").add(note);
     else { note.id = "local-" + note.created; notes.push(note); saveLocal(); render(); if (!$("exportText").hidden) $("exportText").value = exportText(); }
     setStatus(mode === "part" ? "Saved. Select another passage to keep going." : "Saved.");
+    if (GH_REPO && ghTok()) pushNote(note).then(() => setStatus("Saved to GitHub.")).catch(() => setStatus("Saved on this device. It will upload to GitHub when the connection works."));
+    try { localStorage.setItem("__KEY__-who", note.by); } catch (e) {}
     $("text").value = ""; picked.what.clear(); picked.who.clear();
     document.querySelectorAll("#whatChips .chip, #whoChips .chip").forEach((b) => b.setAttribute("aria-pressed", "false"));
   } catch (e) {
@@ -451,16 +462,22 @@ function render() {
     el.append(top);
     if (n.text) { const p = document.createElement("p"); p.textContent = n.text; el.append(p); }
     const meta = document.createElement("div"); meta.className = "meta";
-    const who = document.createElement("span"); who.textContent = (n.by || "Someone") + " · " + new Date(n.created).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) + (n.done ? " · addressed" : "");
+    const who = document.createElement("span"); who.textContent = (n.by ? n.by + " · " : "") + new Date(n.created).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) + (n.done ? " · addressed" : "");
     meta.append(who);
     const del = document.createElement("button"); del.className = "del"; del.textContent = "Delete";
     let armed = false;
     del.addEventListener("click", async () => {
       if (!armed) { armed = true; del.textContent = "Tap again to delete"; setTimeout(() => { armed = false; del.textContent = "Delete"; }, 3000); return; }
-      try { if (db && !String(n.id).startsWith("local-")) await db.collection("comments").doc(n.id).delete(); else { notes = notes.filter((x) => x !== n); saveLocal(); render(); } }
+      try {
+        if (db && !String(n.id).startsWith("local-")) await db.collection("comments").doc(n.id).delete();
+        else {
+          if (n.synced) await gh("DELETE", n.path, { message: "Delete listening comment", sha: n.sha, branch: "main" });
+          notes = notes.filter((x) => x !== n); saveLocal(); render();
+        }
+      }
       catch (e) { setStatus("Couldn't delete that comment (" + ((e && e.code) || "error") + ")."); }
     });
-    if (!n.author || n.author === myId || LOCAL) meta.append(del);
+    if ((!n.author || n.author === myId || LOCAL) && (!n.synced || ghTok())) meta.append(del);
     el.append(meta); host.append(el);
   }
   draw();
@@ -487,11 +504,78 @@ $("showText").addEventListener("click", () => {
 });
 
 // ---------- storage ----------
+// ---------- GitHub sync (GitHub Pages only) ----------
+// A device holding a fine-grained token for this repo (Contents: read and write) saves each comment as
+// <Piece>/notes/comments/<draft>_<time>.json and loads everyone's comments. The token comes from the connect link
+// (#connect=<token>) or the box below, and is stored only in this browser.
+const GH_REPO = "__REPO__", GH_DIR = "__FOLDER__", CDIR = GH_DIR + "/notes/comments";
+(() => { const m = location.hash.match(/connect=([^&]+)/); if (!m) return;
+  try { localStorage.setItem("gh-token", decodeURIComponent(m[1])); } catch (e) {}
+  history.replaceState(null, "", location.pathname + location.search); })();
+const ghTok = () => { try { return localStorage.getItem("gh-token") || ""; } catch (e) { return ""; } };
+const encPath = (p) => p.split("/").map(encodeURIComponent).join("/");
+async function gh(method, path, body) {
+  const h = { Accept: "application/vnd.github+json" }; if (ghTok()) h.Authorization = "Bearer " + ghTok();
+  const r = await fetch("https://api.github.com/repos/" + GH_REPO + "/contents/" + encPath(path) + (method === "GET" ? "?ref=main&t=" + Date.now() : ""),
+    { method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: "no-store" });
+  if (method === "GET" && r.status === 404) return null;
+  if (!r.ok) throw { code: "GitHub " + r.status };
+  return r.json();
+}
+const b64 = (s) => { const u = new TextEncoder().encode(s); let x = ""; for (const c of u) x += String.fromCharCode(c); return btoa(x); };
+const inFlight = new Set();
+async function pushNote(n) {
+  if (n.synced || inFlight.has(n.created)) return;                  // never upload the same comment twice
+  inFlight.add(n.created);
+  try {
+    const path = CDIR + "/" + n.draft + "_" + n.created + ".json";
+    const { synced, path: _p, sha: _s, id: _i, ...data } = n;
+    const r = await gh("PUT", path, { message: "Listening comment: __TITLE__ " + n.draft, content: b64(JSON.stringify(data, null, 1)), branch: "main" });
+    Object.assign(n, { synced: true, path, sha: r.content.sha }); saveLocal();
+  } finally { inFlight.delete(n.created); }
+}
+async function pullNotes() {
+  const list = ((await gh("GET", CDIR)) || []).filter((f) => f.name.endsWith(".json"));
+  const paths = new Set(list.map((f) => f.path));
+  notes = notes.filter((n) => !n.synced || paths.has(n.path));                  // deleted elsewhere
+  for (const f of list) {
+    if (notes.some((n) => n.path === f.path)) continue;
+    const n = await (await fetch(f.download_url, { cache: "no-store" })).json();
+    const same = notes.find((x) => x.created === n.created && (x.text || "") === (n.text || ""));
+    if (same) Object.assign(same, { synced: true, path: f.path, sha: f.sha });
+    else notes.push(Object.assign(n, { id: "gh-" + f.sha, synced: true, path: f.path, sha: f.sha }));
+  }
+  saveLocal(); render();
+}
+let syncing = false;
+async function syncAll() {
+  if (!GH_REPO || syncing) return; syncing = true;
+  const msg = (s) => { $("ghSync").textContent = s; };
+  try {
+    if (ghTok()) for (const n of notes.filter((n) => !n.synced)) await pushNote(n);
+    await pullNotes(); msg(ghTok() ? "All comments are saved to GitHub." : "");
+  } catch (e) { msg("Couldn't reach GitHub (" + ((e && e.code) || "offline") + "); comments are kept here and will upload later."); }
+  syncing = false;
+}
+function ghUI() {
+  if (!GH_REPO) return;
+  const on = !!ghTok();
+  $("ghBox").hidden = false; $("ghOn").hidden = !on; $("ghOff").hidden = on; $("ghForget").hidden = !on;
+  $("ghBox").querySelector("summary").textContent = on ? "GitHub connection" : "Connect this device to GitHub";
+  $("handoffTitle").textContent = on ? "Your comments are saved to GitHub" : "Your comments stay on this device";
+  $("saveMode").textContent = on ? "Saved to GitHub" : "Saved on this device";
+}
+if (GH_REPO) {
+  $("ghSave").addEventListener("click", () => { const k = $("ghKey").value.trim(); if (!k) return;
+    try { localStorage.setItem("gh-token", k); } catch (e) {} $("ghKey").value = ""; ghUI(); syncAll(); });
+  $("ghForget").addEventListener("click", () => { try { localStorage.removeItem("gh-token"); } catch (e) {} ghUI(); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) syncAll(); });
+}
 function saveLocal() { try { localStorage.setItem("__KEY__-notes", JSON.stringify(notes)); } catch (e) {} }
 function useLocal() {
   LOCAL = true; try { notes = JSON.parse(localStorage.getItem("__KEY__-notes") || "[]"); } catch (e) { notes = []; }
   $("saveMode").textContent = "Saved on this device"; $("saveMode").className = "badge local";
-  $("handoff").hidden = false; render();
+  $("handoff").hidden = false; render(); ghUI(); syncAll();
 }
 (async () => {
   const c = window.claude;

@@ -1,6 +1,6 @@
 """Build the listening-notes page for one piece.
 
-usage: build.py "PIECE FOLDER" OUT.html [AUDIO_BASE_URL]
+usage: build.py "PIECE FOLDER" OUT.html [AUDIO_BASE_URL owner/repo]
 
 Reads PIECE FOLDER/config/listening_page.json:
   {"title": "Disney Medley", "short_title": "Medley", "storage_key": "medley",
@@ -19,6 +19,7 @@ import numpy as np
 
 piece, out = sys.argv[1:3]
 base = sys.argv[3] if len(sys.argv) > 3 else None
+repo = sys.argv[4] if len(sys.argv) > 4 else ''      # GitHub Pages: comments sync to the repo
 cfg = json.load(open(os.path.join(piece, 'config', 'listening_page.json')))
 drafts = []
 for d in cfg['drafts']:
@@ -33,8 +34,12 @@ for d in cfg['drafts']:
                        peaks=[round(100 * p / mx) for p in pk], songs=d['songs']))
 t = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template.html')).read()
 for k, v in {'__TITLE_SHORT__': cfg.get('short_title', cfg['title']), '__TITLE__': cfg['title'],
-             '__GH__': cfg['github_raw'], '__KEY__': cfg['storage_key'],
+             '__GH__': cfg['github_raw'], '__KEY__': cfg['storage_key'], '__REPO__': repo,
+             '__FOLDER__': os.path.basename(os.path.abspath(piece)) if repo else '',
              '__DRAFTS__': json.dumps(drafts, separators=(',', ':'))}.items():
     t = t.replace(k, v)
+if base:   # standalone page (GitHub Pages): add the document skeleton the artifact viewer would otherwise supply
+    t = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
+         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>' + t + '</body></html>')
 open(out, 'w').write(t)
 print(f'{out}: {len(drafts)} drafts')
