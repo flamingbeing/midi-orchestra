@@ -21,7 +21,7 @@ This repo turns MIDI scores into realistic orchestral recordings. There is one f
    - **Only this piece** (a passage too loud, a part to bring out, a tempo the listener wants): put it in `<Piece>/config/piece.json` (`mix.target`, `mix.automation`, `fermata_end_ticks`, `track_map`) or in `<Piece>/config/`.
    - **How an instrument or technique sounds everywhere** (a sample problem, attacks, breathing, the hall): change `pipeline/*.py`. That improves every piece's future drafts.
 3. Render the next draft: `PY=python3 pipeline/run.sh "<Piece>" draftN`. This writes `<Piece>/drafts/<midi name>_draftN.mp3` (MP3 VBR V2).
-4. Verify the draft. Then write `<Piece>/notes/changes_draftN.md`, ending with a short "what you should hear differently" list.
+4. Verify the draft: `pipeline/tools/verify.py --stems $WORK/stems --master $WORK/master.wav --midi $WORK/input.mid --mix-log $WORK/mix.log --prev-metrics <previous metrics> --out <Piece>/notes/metrics_draftN.json`. Without `--mix-log` its melody-masking numbers are meaningless. When a gate trips on notes you changed on purpose (for example louder glissandi), re-measure with those notes excluded before deciding. Then write `<Piece>/notes/changes_draftN.md`, ending with a short "what you should hear differently" list.
 5. Commit and push. GitHub Actions rebuilds the listening site (`.github/workflows/pages.yml`), and the new draft becomes its default.
 
 ## Engine changes must not break other pieces

@@ -25,7 +25,7 @@ fi
 PIECE="$PIECE_JSON" "$PY" -I "$PIPE/render.py" "$WORK/input.mid" none "$WORK/stems" 2>&1 | grep -v -i warn
 [ -f "$WORK/stems/Clarinet.wav" ] && ffmpeg -y -loglevel error -i "$WORK/stems/Clarinet.wav" \
   -af "equalizer=f=2200:t=q:w=1.0:g=3" -c:a pcm_f32le "$WORK/_c.wav" && mv "$WORK/_c.wav" "$WORK/stems/Clarinet.wav"
-PIECE="$PIECE_JSON" "$PY" -I "$PIPE/mix.py" "$WORK/stems" "$WORK/dry.wav" "$WORK/input.mid"
+PIECE="$PIECE_JSON" "$PY" -I "$PIPE/mix.py" "$WORK/stems" "$WORK/dry.wav" "$WORK/input.mid" | tee "$WORK/mix.log"   # verify.py --mix-log
 
 # master: no bus compressor; gentle air shelf, static gain to -16 LUFS, safety limiter
 MASTER_AIR=${MASTER_AIR-,treble=g=3:f=7000:t=s:w=0.6}

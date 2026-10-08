@@ -76,7 +76,7 @@ def lead_trim(x, db=-10.0, pre=0.040):
     return x[max(0, i10 - int(pre * SR)):]
 
 
-def tonejs_bank(name, sustain=True, release=0.3, gain=1.0, attack=0.004, trim=False):
+def tonejs_bank(name, sustain=True, release=0.3, gain=1.0, attack=0.004, trim=False, level_window=None):
     d = os.path.join(DL, f'tonejs-instrument-{name}-wav', 'package')
     out = []
     for f in sorted(os.listdir(d)):
@@ -90,7 +90,11 @@ def tonejs_bank(name, sustain=True, release=0.3, gain=1.0, attack=0.004, trim=Fa
         x = x[max(0, on - int(0.003 * SR)):]
         if trim and os.environ.get('V8_FLUTETRIM', '1') == '1':
             x = lead_trim(x)
-        out.append(dict(midi=midi, vel=1, tune=0, audio=x / (rms_level(x) + 1e-9) * 0.1, loop=None, variant=None))
+        # level_window=(a, b): level each sample on that span (s) instead of 0.05-1.0 s; plucked strings use their
+        # first 0.3 s, because low strings ring longer and would otherwise pluck ~3 dB softer than high ones
+        lev = rms_level(x) if level_window is None else float(np.sqrt(np.mean(np.asarray(
+            x[int(level_window[0] * SR): int(level_window[1] * SR)], dtype=np.float64) ** 2)) + 1e-9)
+        out.append(dict(midi=midi, vel=1, tune=0, audio=x / (lev + 1e-9) * 0.1, loop=None, variant=None))
     return Bank(name, out, sustain, release, gain, attack)
 
 
@@ -274,7 +278,8 @@ TRACKS = {
 # piece config (env PIECE=path/to/piece.json): extra MIDI track names -> (bank, pan, gain dB, voices), fermatas
 PIECE = json.load(open(os.environ['PIECE'])) if os.environ.get('PIECE') else {}
 # "banks": {"Guitar": "guitar_acoustic"} plays a track on another sample set (OPTIONAL_BANKS below)
-OPTIONAL_BANKS = {'guitar_acoustic': lambda: tonejs_bank('guitar-acoustic', sustain=False, release=0.3, gain=0.9, attack=0.002)}
+OPTIONAL_BANKS = {'guitar_acoustic': lambda: tonejs_bank('guitar-acoustic', sustain=False, release=0.3, gain=0.9, attack=0.002,
+                                                         level_window=(0.0, 0.3))}
 for k, v in PIECE.get('banks', {}).items():
     if v not in BANKS:
         BANKS[v] = OPTIONAL_BANKS[v]()
