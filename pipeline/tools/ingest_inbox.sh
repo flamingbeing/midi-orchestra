@@ -18,7 +18,7 @@ for f in "$ROOT"/inbox/*.mid "$ROOT"/inbox/*.midi; do
     grep -E "^notes per sound|^WARNING" "$log" | sed 's/^/- /'
   } > "$ROOT/$folder/notes/draft1_render.md"
   rm -f "$log"
-  "$PY" -I "$ROOT/pipeline/listening_page/update_config.py" "$ROOT/$folder"
+  "$PY" -I "$ROOT/pipeline/listening_page/update_config.py" "$ROOT/$folder" >&2
   rm "$f"
   echo "$folder"
 done

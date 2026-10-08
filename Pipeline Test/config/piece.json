@@ -1,7 +1,0 @@
-{
- "title": "Pipeline Test",
- "midi": "score/pipeline_test.mid",
- "mix": {
-  "automation": {}
- }
-}
